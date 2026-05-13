@@ -2,6 +2,7 @@ import {
   useRef,
   useEffect,
   useMemo,
+  useCallback,
   Suspense,
   forwardRef,
   Component,
@@ -11,7 +12,7 @@ import {
 import { Canvas, useThree } from '@react-three/fiber'
 import { useGLTF, ContactShadows, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
-import type { EditorState } from '@/types'
+import type { EditorState, SceneTemplate } from '@/types'
 import type { ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
 
@@ -19,6 +20,9 @@ const BODY_MESHES = new Set([
   // iPhone / phone body
   'Edge', 'Edge_Antenna', 'Edge_Clean', 'Back', 'Matte', 'Gray',
   'Back_Glass', 'Glass_Back', 'Screen_Edge',
+  // _001 / _002 suffix duplicates (iPhone 12 2020, iPhone 13)
+  'Edge_001', 'Edge_Antenna_001', 'Back_001', 'Gray_001', 'Screen_Edge_001',
+  'Matte_001', 'Matte_002',
   // Generic device body
   'Body', 'Keyboard', 'Trackpad', 'Base', 'Lid', 'Hinge',
   'Bottom', 'Top', 'Frame', 'Band', 'Case',
@@ -38,16 +42,24 @@ const BODY_MESHES = new Set([
   'Caps_Key', 'Bottom_Body_001', 'Screen_Bottom', 'Key', 'Metals',
   // iMac 24" variants
   'Body_Light_001', 'Body_Light_002', 'Body_Light_003',
-  'Metal', 'Power', 'Screw', 'Plane_001', 'Plane',
+  'Metal', 'Power', 'Screw', 'Plane_001', 'Plane', 'plane',
   // iPad + Magic Keyboard variants
   'Charger_icon', 'Small_Circle', 'LiDAR',
+  // iPad misc (iPad Mini 6, generic/infinity tablet)
+  'Charge_Window', 'Touch_ID', 'Small_Circles', 'Charge_Icon',
   // Apple Watch Ultra 2 variants
   'Antenna', 'Body_Polished', 'Body_Rough', 'Button_Glossy',
   'Loop', 'Loop_Shape', 'Cube',
+  // Watch series 6/7 texture variants
+  'Back_Tex', 'Sensor_Line',
   // Samsung Galaxy (numbered variants)
   'Matte_001',
   // Surface Laptop 4
   'Body_Darker', 'Device_001', 'Text', 'Body_001',
+  // Typo in pro-max-notchless model ('Geay' = Gray)
+  'Geay',
+  // _clayable suffix (iPhone 13 mini)
+  'Matte_clayable',
 ])
 
 const SHADOW_CONFIGS: Record<ShadowPreset, { opacity: number; scale: number; blur: number; far: number } | null> = {
@@ -92,11 +104,33 @@ interface DeviceModelProps {
   screenshotUrl: string | null
   shadow: boolean
   modelScale: number
+  onScreenClick?: () => void
 }
 
-function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: DeviceModelProps) {
+function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale, onScreenClick }: DeviceModelProps) {
   const { scene } = useGLTF(gltfPath)
   const cloned = useMemo(() => scene.clone(true), [scene])
+
+  // Auto-center: compute model-space bounding box excluding shadow/tag meshes
+  const centerOffset = useMemo(() => {
+    let minX = Infinity, maxX = -Infinity
+    let minY = Infinity, maxY = -Infinity
+    let minZ = Infinity, maxZ = -Infinity
+    cloned.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh)) return
+      const n = obj.name
+      if (n.toLowerCase().includes('shadow') || n === 'rotatoTag') return
+      const geo = obj.geometry as THREE.BufferGeometry
+      if (!geo.boundingBox) geo.computeBoundingBox()
+      const b = geo.boundingBox
+      if (!b) return
+      if (b.min.x < minX) minX = b.min.x; if (b.max.x > maxX) maxX = b.max.x
+      if (b.min.y < minY) minY = b.min.y; if (b.max.y > maxY) maxY = b.max.y
+      if (b.min.z < minZ) minZ = b.min.z; if (b.max.z > maxZ) maxZ = b.max.z
+    })
+    if (!isFinite(minX)) return new THREE.Vector3()
+    return new THREE.Vector3((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2)
+  }, [cloned])
 
   const screenshotTex = useMemo(() => {
     if (!screenshotUrl) return null
@@ -115,7 +149,7 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: 
       if (name.toLowerCase().includes('shadow') || name === 'rotatoTag') {
         node.visible = false; return
       }
-      if (name === 'Screen' || name === 'Screen_Top') {
+      if (name === 'Screen' || name === 'Screen_Top' || name === 'Screen_Inside') {
         if (screenshotTex) {
           const uvAttr = node.geometry.attributes.uv as THREE.BufferAttribute | undefined
           if (uvAttr) {
@@ -137,8 +171,8 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: 
         node.receiveShadow = false; return
       }
       if (
-        name === 'Glass' || name === 'Glass_Screen' ||
-        name === 'Glass_Top' || name === 'Glass_Screen_Top'
+        name === 'Glass' || name === 'Glass_Screen' || name === 'Glass_screen' ||
+        name === 'Glass_Top' || name === 'Glass_Screen_Top' || name === 'Glass_001'
       ) {
         if (screenshotTex) { node.visible = false } else {
           node.visible = true
@@ -161,8 +195,8 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: 
       ) {
         node.material = new THREE.MeshStandardMaterial({ color: '#0a0a0a', roughness: 0.2, metalness: 0.5 }); return
       }
-      // Rougher glass variants (Galaxy S25, iPhone 16)
-      if (name === 'GlassRough' || name === 'Glass_Rough') {
+      // Rougher glass variants (Galaxy S25, iPhone 16, iPhone 12 2020 _001)
+      if (name === 'GlassRough' || name === 'Glass_Rough' || name === 'Glass_Rough_001') {
         node.material = new THREE.MeshPhysicalMaterial({
           color: '#ffffff', transmission: 0.4, roughness: 0.15,
           metalness: 0, thickness: 0.3, transparent: true, opacity: 0.4, depthWrite: false,
@@ -174,15 +208,18 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: 
       if (name === 'BlackRing' || name === 'Front_Gray') {
         node.material = new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.4, metalness: 0.6 }); return
       }
-      if (name.includes('Lens') || name === 'Camera_Module' || name === 'Camera_Edge' || name === 'Front_Lens') {
+      if (name.includes('Lens') || name === 'Lidar' || name === 'Camera_Module' || name === 'Camera_Edge' || name === 'Front_Lens') {
         node.material = new THREE.MeshStandardMaterial({ color: '#0d0d0d', roughness: 0.2, metalness: 0.9 }); return
       }
-      if (name === 'Flash') {
+      if (name === 'Flash' || name === 'Flash_001' || name === 'Flash_clayable') {
         node.material = new THREE.MeshStandardMaterial({ color: '#fff5cc', roughness: 0.1, metalness: 0.5 }); return
       }
       if (
-        name === 'Black' || name === 'Sensor' || name === 'Sensor_2' || name === 'Mic' ||
-        name === 'Plastic' || name === 'Plastic_Top' || name === 'Bottom_Plastic' ||
+        name === 'Black' || name === 'Black_001' || name === 'Black_clayable' ||
+        name === 'Sensor' || name === 'Sensor_2' ||
+        name === 'Mic' || name === 'Mic_001' ||
+        name === 'Plastic' || name === 'Plastic_001' || name === 'Plastic_clayable' ||
+        name === 'Plastic_Top' || name === 'Bottom_Plastic' ||
         name === 'Hinge_BlackBox' || name === 'Screen_Edge_Black'
       ) {
         node.material = new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.5, metalness: 0.4 }); return
@@ -201,8 +238,21 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: 
   }, [cloned, colorHex, screenshotTex, shadow])
 
   return (
-    <group scale={modelScale}>
-      <primitive object={cloned} />
+    <group
+      scale={modelScale}
+      position={[-centerOffset.x, -centerOffset.y, -centerOffset.z]}
+    >
+      <primitive
+        object={cloned}
+        onClick={(e: any) => {
+          if (!onScreenClick) return
+          const n: string = e.object?.name ?? ''
+          if (n === 'Screen' || n === 'Screen_Top' || n === 'Screen_Inside') {
+            e.stopPropagation()
+            onScreenClick()
+          }
+        }}
+      />
     </group>
   )
 }
@@ -281,20 +331,49 @@ export interface ThreeCanvasRef { exportPNG: () => string }
 interface ThreeCanvasProps {
   state: EditorState & { shadowPreset?: ShadowPreset }
   canvasRef?: MutableRefObject<ThreeCanvasRef | null>
+  onScreenshotUpload?: (dataUrl: string) => void
+  /** Multi-device scene template (overrides state.deviceId when set) */
+  sceneTemplate?: SceneTemplate
+  /** Screenshots keyed by slot index for multi-device scenes */
+  slotScreenshots?: Record<number, string | null>
+  onSlotScreenshotUpload?: (slotIndex: number, dataUrl: string) => void
 }
 
 export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
-  function ThreeCanvas({ state, canvasRef }, _ref) {
+  function ThreeCanvas({ state, canvasRef, onScreenshotUpload, sceneTemplate, slotScreenshots, onSlotScreenshotUpload }, _ref) {
     const exportFnRef = useRef<(() => string) | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const slotInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
+
     const device = DEVICE_MODELS[state.deviceId]
     const color = device.colors.find((c) => c.id === state.colorId) ?? device.colors[0]
     const shadowPreset = (state.shadowPreset ?? 'long') as ShadowPreset
     const shadowCfg = SHADOW_CONFIGS[shadowPreset]
-    const camPresets = device.camPresets ?? DEFAULT_CAM
+    const camPresets = sceneTemplate?.camPresets ?? device.camPresets ?? DEFAULT_CAM
 
     useEffect(() => {
       if (canvasRef) canvasRef.current = { exportPNG: () => exportFnRef.current?.() ?? '' }
     }, [canvasRef])
+
+    const handleScreenClick = useCallback(() => { fileInputRef.current?.click() }, [])
+
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file || !onScreenshotUpload) return
+      const reader = new FileReader()
+      reader.onload = (ev) => onScreenshotUpload(ev.target?.result as string)
+      reader.readAsDataURL(file)
+      e.target.value = ''
+    }, [onScreenshotUpload])
+
+    const handleSlotFileChange = useCallback((slotIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file || !onSlotScreenshotUpload) return
+      const reader = new FileReader()
+      reader.onload = (ev) => onSlotScreenshotUpload(slotIndex, ev.target?.result as string)
+      reader.readAsDataURL(file)
+      e.target.value = ''
+    }, [onSlotScreenshotUpload])
 
     const bgStyle: React.CSSProperties =
       state.background.type === 'gradient'
@@ -306,6 +385,19 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
     return (
       <CanvasErrorBoundary>
         <div className="relative w-full h-full" style={bgStyle}>
+          {/* Single-device file input */}
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          {/* Per-slot file inputs for multi-device scenes */}
+          {sceneTemplate?.slots.map((_, i) => (
+            <input
+              key={i}
+              ref={(el) => { slotInputRefs.current[i] = el }}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleSlotFileChange(i, e)}
+            />
+          ))}
           <Canvas
             camera={{ position: camPresets[state.cameraAngle], fov: 45 }}
             shadows={!!shadowCfg}
@@ -318,13 +410,36 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
             <StudioLighting shadow={!!shadowCfg} />
 
             <Suspense fallback={null}>
-              <DeviceModel
-                gltfPath={device.gltfPath}
-                colorHex={color.hex}
-                screenshotUrl={state.screenshot}
-                shadow={!!shadowCfg}
-                modelScale={device.modelScale}
-              />
+              {sceneTemplate ? (
+                // Multi-device scene
+                sceneTemplate.slots.map((slot, i) => {
+                  const slotDevice = DEVICE_MODELS[slot.deviceId]
+                  const slotScale = slotDevice.modelScale * (slot.scaleMul ?? 1)
+                  const rot = slot.rotation.map((d) => (d * Math.PI) / 180) as [number, number, number]
+                  return (
+                    <group key={i} position={slot.position} rotation={rot}>
+                      <DeviceModel
+                        gltfPath={slotDevice.gltfPath}
+                        colorHex={slotDevice.colors[0].hex}
+                        screenshotUrl={slotScreenshots?.[i] ?? null}
+                        shadow={!!shadowCfg}
+                        modelScale={slotScale}
+                        onScreenClick={onSlotScreenshotUpload ? () => slotInputRefs.current[i]?.click() : undefined}
+                      />
+                    </group>
+                  )
+                })
+              ) : (
+                // Single device
+                <DeviceModel
+                  gltfPath={device.gltfPath}
+                  colorHex={color.hex}
+                  screenshotUrl={state.screenshot}
+                  shadow={!!shadowCfg}
+                  modelScale={device.modelScale}
+                  onScreenClick={onScreenshotUpload ? handleScreenClick : undefined}
+                />
+              )}
             </Suspense>
 
             {shadowCfg && (

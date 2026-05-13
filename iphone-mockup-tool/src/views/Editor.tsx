@@ -75,20 +75,17 @@ export function Editor({ onBack }: Props) {
         {/* 3D Viewport */}
         <div className="flex-1 relative min-h-0">
           {!state.screenshot && (
-            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-              <div
-                onClick={handleUpload}
-                className="pointer-events-auto flex flex-col items-center gap-3 px-8 py-6 rounded-2xl border-2 border-dashed border-white/15 hover:border-white/35 cursor-pointer transition-colors"
-              >
-                <Upload className="w-7 h-7 text-white/25" />
-                <div className="text-center">
-                  <p className="text-sm font-medium text-white/50">Drop screenshot here</p>
-                  <p className="text-xs text-white/25 mt-0.5">or click to browse</p>
-                </div>
-              </div>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+              <p className="text-xs text-white/30 bg-black/30 rounded-full px-4 py-1.5 backdrop-blur-sm">
+                Click the device screen to upload a screenshot
+              </p>
             </div>
           )}
-          <ThreeCanvas state={state} canvasRef={canvasRef} />
+          <ThreeCanvas
+            state={state}
+            canvasRef={canvasRef}
+            onScreenshotUpload={state.setScreenshot}
+          />
         </div>
 
         {/* Right panel */}

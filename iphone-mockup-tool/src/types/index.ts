@@ -69,6 +69,32 @@ export interface DeviceModel {
   }
 }
 
+// ── Scene templates (multi-device compositions) ─────────────────────────────
+
+export interface SceneSlot {
+  deviceId: DeviceId
+  /** Position in scene units relative to scene origin */
+  position: [number, number, number]
+  /** Euler rotation in degrees [x, y, z] */
+  rotation: [number, number, number]
+  /** Extra scale multiplier on top of device's modelScale */
+  scaleMul?: number
+  /** Label shown in the UI for this slot */
+  label: string
+}
+
+export interface SceneTemplate {
+  id: string
+  name: string
+  thumbnailPath: string
+  slots: SceneSlot[]
+  camPresets?: {
+    front: [number, number, number]
+    isometric: [number, number, number]
+    side: [number, number, number]
+  }
+}
+
 export type BackgroundType = 'transparent' | 'solid' | 'gradient' | 'image'
 
 export interface BackgroundConfig {

@@ -1,9 +1,9 @@
 import type { DeviceModel, DeviceId, DeviceCategory } from '@/types'
 
 const MAC_CAM = {
-  front:     [0,  7, 20] as [number,number,number],
-  isometric: [11, 9, 17] as [number,number,number],
-  side:      [22, 9,  9] as [number,number,number],
+  front:     [0,  1, 18] as [number,number,number],
+  isometric: [10, 5, 15] as [number,number,number],
+  side:      [20, 4,  8] as [number,number,number],
 }
 const TABLET_CAM = {
   front:     [0, 0, 22] as [number,number,number],
@@ -166,7 +166,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/iphone-14-pro.gltf',
     thumbnailPath: '/thumbnails/iphone-14-pro.png',
     screenAspect: 19.5 / 9,
-    modelScale: 45.777,
+    modelScale: 47.47,
     colors: [
       { id: 'space',  label: 'Space Black',  hex: '#1c1c1e' },
       { id: 'silver', label: 'Silver',        hex: '#e8e4de' },
@@ -279,7 +279,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/ipad-mini-6.gltf',
     thumbnailPath: '/thumbnails/ipad-mini-6.png',
     screenAspect: 3 / 2,
-    modelScale: 3.5,
+    modelScale: 40.8,
     camPresets: TABLET_CAM,
     colors: [
       { id: 'space',     label: 'Space Gray', hex: '#2c2c2e' },
@@ -295,7 +295,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/ipad-2021-magic-keyboard.gltf',
     thumbnailPath: '/thumbnails/ipad-2021-magic-keyboard.png',
     screenAspect: 4 / 3,
-    modelScale: 22.76,
+    modelScale: 35.1,
     camPresets: MAC_CAM,
     colors: [
       { id: 'space',     label: 'Space Gray', hex: '#2c2c2e' },
@@ -339,7 +339,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-pro-m3-16.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m3-16.png',
     screenAspect: 16 / 10,
-    modelScale: 0.2322,
+    modelScale: 0.2825,
     camPresets: MAC_CAM,
     colors: [
       { id: 'space',  label: 'Space Black', hex: '#1c1c1e' },
@@ -367,8 +367,8 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-pro-m1-16.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m1-16.png',
     screenAspect: 16 / 10,
-    modelScale: 3.5,
-    // model is in standing/front-facing orientation (Z-depth ≈ 1 unit), use default phone cam
+    modelScale: 33.7,
+    camPresets: MAC_CAM,
     colors: [
       { id: 'space',  label: 'Space Gray', hex: '#3a3a3c' },
       { id: 'silver', label: 'Silver',     hex: '#e8e4de' },
@@ -381,7 +381,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-air-m2-15.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m3-16.png',
     screenAspect: 16 / 10,
-    modelScale: 0.2456,
+    modelScale: 0.35,
     camPresets: MAC_CAM,
     colors: [
       { id: 'starlight', label: 'Starlight', hex: '#f5f0e8' },
@@ -397,7 +397,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-air-m2-13.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m3-14.png',
     screenAspect: 16 / 10,
-    modelScale: 24.56,
+    modelScale: 46.04,
     camPresets: MAC_CAM,
     colors: [
       { id: 'starlight', label: 'Starlight', hex: '#f5f0e8' },
@@ -413,7 +413,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-air-m1.gltf',
     thumbnailPath: '/thumbnails/macbook-air-m1.png',
     screenAspect: 16 / 10,
-    modelScale: 3.5,
+    modelScale: 42.96,
     camPresets: MAC_CAM,
     colors: [
       { id: 'space',     label: 'Space Gray', hex: '#3a3a3c' },
@@ -428,7 +428,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/imac-24.gltf',
     thumbnailPath: '/thumbnails/imac-24.png',
     screenAspect: 16 / 9,
-    modelScale: 3.5,
+    modelScale: 6.0,
     camPresets: {
       front:     [0, 0, 26] as [number,number,number],
       isometric: [10, 4, 22] as [number,number,number],
@@ -451,7 +451,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/surface-laptop-4.gltf',
     thumbnailPath: '/thumbnails/surface-laptop-4.png',
     screenAspect: 3 / 2,
-    modelScale: 3.5,
+    modelScale: 39.0,
     camPresets: MAC_CAM,
     colors: [
       { id: 'platinum', label: 'Platinum', hex: '#c8c8c8' },
@@ -469,7 +469,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/watch-ultra-2.gltf',
     thumbnailPath: '/thumbnails/watch-ultra-2.png',
     screenAspect: 1,
-    modelScale: 0.425,
+    modelScale: 0.52,
     camPresets: WATCH_CAM,
     colors: [
       { id: 'natural', label: 'Natural Titanium', hex: '#c8c8c8' },
@@ -483,7 +483,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/watch-series-7.gltf',
     thumbnailPath: '/thumbnails/watch-series-7.png',
     screenAspect: 1,
-    modelScale: 3.5,
+    modelScale: 3.15,
     camPresets: WATCH_CAM,
     colors: [
       { id: 'midnight',  label: 'Midnight',  hex: '#1c1c1e' },
@@ -500,7 +500,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/watch-series-6.gltf',
     thumbnailPath: '/thumbnails/watch-series-6.png',
     screenAspect: 1,
-    modelScale: 3.5,
+    modelScale: 3.15,
     camPresets: WATCH_CAM,
     colors: [
       { id: 'space',  label: 'Space Gray', hex: '#3a3a3c' },
@@ -519,7 +519,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/galaxy-s25-plus.gltf',
     thumbnailPath: '/thumbnails/galaxy-s25-plus.png',
     screenAspect: 19.5 / 9,
-    modelScale: 0.4577,
+    modelScale: 44.2,
     colors: [
       { id: 'titanium-silver',  label: 'Titanium Silverblue', hex: '#8fa8c0' },
       { id: 'titanium-black',   label: 'Titanium Black',      hex: '#1c1c1e' },
@@ -534,7 +534,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/galaxy-s25.gltf',
     thumbnailPath: '/thumbnails/galaxy-s25.png',
     screenAspect: 19.5 / 9,
-    modelScale: 0.4577,
+    modelScale: 47.6,
     colors: [
       { id: 'titanium-silver',  label: 'Titanium Silverblue', hex: '#8fa8c0' },
       { id: 'titanium-black',   label: 'Titanium Black',      hex: '#1c1c1e' },
