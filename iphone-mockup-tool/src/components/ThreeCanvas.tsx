@@ -1,278 +1,272 @@
-import { useRef, useEffect, useMemo, Suspense, forwardRef } from 'react'
+import {
+  useRef,
+  useEffect,
+  useMemo,
+  Suspense,
+  forwardRef,
+  Component,
+  type ReactNode,
+  type MutableRefObject,
+} from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { useGLTF, Environment, ContactShadows, OrbitControls } from '@react-three/drei'
+import { useGLTF, ContactShadows, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import type { EditorState } from '@/types'
+import type { ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
 
-// ── Meshes that make up the structural/colored body of the phone ─────────────
-const BODY_MESH_NAMES = new Set([
+const BODY_MESHES = new Set([
   'Edge', 'Edge_Antenna', 'Edge_Clean', 'Back', 'Matte', 'Gray',
-  'Back_Glass', 'Glass_Back',
+  'Back_Glass', 'Glass_Back', 'Screen_Edge',
+  'Body', 'Keyboard', 'Trackpad', 'Base', 'Lid', 'Hinge',
+  'Bottom', 'Top', 'Frame', 'Band', 'Case',
 ])
 
-// ── Screen placeholder color while screenshot is loading ─────────────────────
-const SCREEN_PLACEHOLDER = new THREE.Color(0x000000)
+const SHADOW_CONFIGS: Record<ShadowPreset, { opacity: number; scale: number; blur: number; far: number } | null> = {
+  none:  null,
+  soft:  { opacity: 0.25, scale: 20, blur: 4,   far: 6  },
+  long:  { opacity: 0.40, scale: 26, blur: 2.5,  far: 14 },
+  short: { opacity: 0.55, scale: 12, blur: 1.5,  far: 4  },
+}
 
-interface PhoneModelProps {
+const DEFAULT_CAM: Record<EditorState['cameraAngle'], [number, number, number]> = {
+  front:     [0,  0, 18],
+  isometric: [7,  4, 16],
+  side:      [18, 2,  8],
+}
+
+// ── Error boundary ─────────────────────────────────────────────────────────────
+class CanvasErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null }
+  static getDerivedStateFromError(e: Error) { return { error: e } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-3 p-6 bg-[#1e1e1e]">
+          <p className="text-sm font-medium text-red-400">3D render error</p>
+          <pre className="text-xs text-white/40 bg-white/5 rounded p-3 max-w-sm overflow-auto whitespace-pre-wrap">
+            {this.state.error.message}
+          </pre>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+// ── Device model ───────────────────────────────────────────────────────────────
+interface DeviceModelProps {
   gltfPath: string
   colorHex: string
   screenshotUrl: string | null
   shadow: boolean
+  modelScale: number
 }
 
-function PhoneModel({ gltfPath, colorHex, screenshotUrl, shadow }: PhoneModelProps) {
+function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: DeviceModelProps) {
   const { scene } = useGLTF(gltfPath)
   const cloned = useMemo(() => scene.clone(true), [scene])
 
   const screenshotTex = useMemo(() => {
     if (!screenshotUrl) return null
-    const img = new Image()
-    img.src = screenshotUrl
-    const tex = new THREE.Texture(img)
+    const tex = new THREE.TextureLoader().load(screenshotUrl)
     tex.colorSpace = THREE.SRGBColorSpace
     tex.flipY = false
-    img.onload = () => { tex.needsUpdate = true }
     return tex
   }, [screenshotUrl])
 
   useEffect(() => {
     const bodyColor = new THREE.Color(colorHex)
+    cloned.traverse((node) => {
+      if (!(node instanceof THREE.Mesh)) return
+      const name: string = node.name
 
-    cloned.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return
-      const name = child.name
-
+      if (name.toLowerCase().includes('shadow') || name === 'rotatoTag') {
+        node.visible = false; return
+      }
       if (name === 'Screen') {
-        const mat = new THREE.MeshStandardMaterial({
-          map: screenshotTex,
-          color: screenshotTex ? 0xffffff : SCREEN_PLACEHOLDER,
-          roughness: 0.05,
-          metalness: 0.0,
-          envMapIntensity: 0.3,
+        if (screenshotTex) {
+          const uvAttr = node.geometry.attributes.uv as THREE.BufferAttribute | undefined
+          if (uvAttr) {
+            let minU = Infinity, maxU = -Infinity, minV = Infinity, maxV = -Infinity
+            for (let i = 0; i < uvAttr.count; i++) {
+              const u = uvAttr.getX(i), v = uvAttr.getY(i)
+              if (u < minU) minU = u; if (u > maxU) maxU = u
+              if (v < minV) minV = v; if (v > maxV) maxV = v
+            }
+            const ru = maxU - minU || 1, rv = maxV - minV || 1
+            screenshotTex.repeat.set(1 / ru, 1 / rv)
+            screenshotTex.offset.set(-minU / ru, -minV / rv)
+          }
+        }
+        node.material = new THREE.MeshBasicMaterial({
+          map: screenshotTex ?? null,
+          color: screenshotTex ? '#ffffff' : '#050505',
         })
-        child.material = mat
-        child.receiveShadow = shadow
-        return
+        node.receiveShadow = false; return
       }
-
       if (name === 'Glass' || name === 'Glass_Screen') {
-        child.material = new THREE.MeshPhysicalMaterial({
-          color: 0xffffff,
-          transmission: 0.85,
-          roughness: 0.05,
-          metalness: 0.0,
-          thickness: 0.5,
-          envMapIntensity: 1.5,
-          transparent: true,
-          opacity: 0.6,
-        })
-        child.renderOrder = 1
+        if (screenshotTex) { node.visible = false } else {
+          node.visible = true
+          node.material = new THREE.MeshPhysicalMaterial({
+            color: '#ffffff', transmission: 0.55, roughness: 0.02,
+            metalness: 0, thickness: 0.3, transparent: true, opacity: 0.35, depthWrite: false,
+          })
+          node.renderOrder = 2
+        }
         return
       }
-
-      if (name.includes('Glass_Lens') || name.includes('Glass_Camera')) {
-        child.material = new THREE.MeshPhysicalMaterial({
-          color: 0x111111,
-          transmission: 0.3,
-          roughness: 0.1,
-          metalness: 0.5,
-          envMapIntensity: 2,
-        })
-        return
+      if (name.includes('Glass_Lens') || name.includes('Glass_Camera') || name === 'Glass_Back') {
+        node.material = new THREE.MeshPhysicalMaterial({ color: '#0a0a0a', roughness: 0.05, metalness: 0.1, transmission: 0.2 }); return
       }
-
       if (name.includes('Lens') || name === 'Camera_Module' || name === 'Camera_Edge') {
-        child.material = new THREE.MeshStandardMaterial({
-          color: 0x111111,
-          roughness: 0.3,
-          metalness: 0.9,
-          envMapIntensity: 1,
-        })
-        return
+        node.material = new THREE.MeshStandardMaterial({ color: '#0d0d0d', roughness: 0.2, metalness: 0.9 }); return
       }
-
       if (name === 'Flash') {
-        child.material = new THREE.MeshStandardMaterial({
-          color: 0xfff8dc,
-          roughness: 0.1,
-          metalness: 0.6,
-        })
-        return
+        node.material = new THREE.MeshStandardMaterial({ color: '#fff5cc', roughness: 0.1, metalness: 0.5 }); return
       }
-
-      if (name === 'Black' || name === 'Sensor') {
-        child.material = new THREE.MeshStandardMaterial({
-          color: 0x111111,
-          roughness: 0.4,
-          metalness: 0.5,
-        })
-        return
+      if (name === 'Black' || name === 'Sensor' || name === 'Mic' || name === 'Plastic') {
+        node.material = new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.5, metalness: 0.4 }); return
       }
-
-      // Shadow mesh — invisible in 3D view
-      if (name.includes('shadow') || name.includes('Shadow') || name === 'rotatoTag') {
-        child.visible = false
-        return
+      if (BODY_MESHES.has(name)) {
+        node.material = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.22, metalness: 0.88 })
+        node.castShadow = shadow; return
       }
-
-      if (BODY_MESH_NAMES.has(name)) {
-        child.material = new THREE.MeshStandardMaterial({
-          color: bodyColor,
-          roughness: 0.25,
-          metalness: 0.85,
-          envMapIntensity: 1.2,
-        })
-        child.castShadow = shadow
-        return
-      }
-
-      // Fallback for any unnamed mesh
-      child.material = new THREE.MeshStandardMaterial({
-        color: bodyColor,
-        roughness: 0.3,
-        metalness: 0.7,
-      })
-      child.castShadow = shadow
+      node.material = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.3, metalness: 0.6 })
+      node.castShadow = shadow
     })
   }, [cloned, colorHex, screenshotTex, shadow])
 
-  return <primitive object={cloned} />
+  return (
+    <group scale={modelScale}>
+      <primitive object={cloned} />
+    </group>
+  )
 }
 
-// ── Background plane for solid/gradient backgrounds ──────────────────────────
-function SceneBackground({ background }: { background: EditorState['background'] }) {
-  const { scene } = useThree()
+// ── Studio lighting ────────────────────────────────────────────────────────────
+function StudioLighting({ shadow }: { shadow: boolean }) {
+  return (
+    <>
+      <ambientLight intensity={0.8} />
+      <directionalLight
+        position={[5, 10, 8]} intensity={1.8} castShadow={shadow}
+        shadow-mapSize-width={2048} shadow-mapSize-height={2048}
+        shadow-camera-near={0.1} shadow-camera-far={120}
+        shadow-camera-left={-22} shadow-camera-right={22}
+        shadow-camera-top={22} shadow-camera-bottom={-22}
+      />
+      <directionalLight position={[-6, 5, 4]} intensity={0.5} />
+      <directionalLight position={[0, 8, -10]} intensity={0.4} />
+      <hemisphereLight args={['#e8eaf6', '#37474f', 0.35]} />
+    </>
+  )
+}
 
+// ── Scene background ───────────────────────────────────────────────────────────
+function SceneBg({ background }: { background: EditorState['background'] }) {
+  const { scene } = useThree()
   useEffect(() => {
-    if (background.type === 'solid' && background.solidColor) {
-      scene.background = new THREE.Color(background.solidColor)
-    } else if (background.type === 'gradient') {
-      // Gradient via CSS on the canvas container — keep Three.js bg null
-      scene.background = null
-    } else {
-      scene.background = null
-    }
+    scene.background =
+      background.type === 'solid' && background.solidColor
+        ? new THREE.Color(background.solidColor) : null
     return () => { scene.background = null }
   }, [scene, background])
-
   return null
 }
 
-// ── Camera preset positions ───────────────────────────────────────────────────
-const CAMERA_PRESETS: Record<EditorState['cameraAngle'], [number, number, number]> = {
-  front:      [0, 0, 18],
-  isometric:  [6, 4, 16],
-  side:       [14, 2, 8],
-}
-
-function CameraController({ angle }: { angle: EditorState['cameraAngle'] }) {
+// ── Camera preset ──────────────────────────────────────────────────────────────
+function CameraPreset({
+  angle,
+  presets,
+}: {
+  angle: EditorState['cameraAngle']
+  presets: Record<EditorState['cameraAngle'], [number, number, number]>
+}) {
   const { camera } = useThree()
   useEffect(() => {
-    const [x, y, z] = CAMERA_PRESETS[angle]
-    camera.position.set(x, y, z)
+    camera.position.set(...presets[angle])
     camera.lookAt(0, 0, 0)
-  }, [angle, camera])
+  }, [angle, presets, camera])
   return null
 }
 
-// ── Exporter helper — called by parent via ref ────────────────────────────────
-interface ExporterProps {
-  onReady: (fn: () => string) => void
-}
-function Exporter({ onReady }: ExporterProps) {
+// ── Export helper ──────────────────────────────────────────────────────────────
+function Exporter({ onReady }: { onReady: (fn: () => string) => void }) {
   const { gl } = useThree()
-  useEffect(() => {
-    onReady(() => gl.domElement.toDataURL('image/png'))
-  }, [gl, onReady])
+  useEffect(() => { onReady(() => gl.domElement.toDataURL('image/png')) }, [gl, onReady])
   return null
 }
 
-// ── Main exported component ───────────────────────────────────────────────────
-export interface ThreeCanvasRef {
-  exportPNG: () => string
-}
+// ── Public API ─────────────────────────────────────────────────────────────────
+export interface ThreeCanvasRef { exportPNG: () => string }
 
 interface ThreeCanvasProps {
-  state: EditorState
-  canvasRef?: React.MutableRefObject<ThreeCanvasRef | null>
+  state: EditorState & { shadowPreset?: ShadowPreset }
+  canvasRef?: MutableRefObject<ThreeCanvasRef | null>
 }
 
 export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
   function ThreeCanvas({ state, canvasRef }, _ref) {
     const exportFnRef = useRef<(() => string) | null>(null)
-
     const device = DEVICE_MODELS[state.deviceId]
     const color = device.colors.find((c) => c.id === state.colorId) ?? device.colors[0]
-    const cameraPos = CAMERA_PRESETS[state.cameraAngle]
+    const shadowPreset = (state.shadowPreset ?? 'long') as ShadowPreset
+    const shadowCfg = SHADOW_CONFIGS[shadowPreset]
+    const camPresets = device.camPresets ?? DEFAULT_CAM
 
     useEffect(() => {
-      if (canvasRef) {
-        canvasRef.current = {
-          exportPNG: () => exportFnRef.current?.() ?? '',
-        }
-      }
+      if (canvasRef) canvasRef.current = { exportPNG: () => exportFnRef.current?.() ?? '' }
     }, [canvasRef])
 
     const bgStyle: React.CSSProperties =
       state.background.type === 'gradient'
-        ? {
-            background: `linear-gradient(${state.background.gradientAngle ?? 135}deg, ${state.background.gradientFrom ?? '#667eea'}, ${state.background.gradientTo ?? '#764ba2'})`,
-          }
+        ? { background: `linear-gradient(${state.background.gradientAngle ?? 135}deg, ${state.background.gradientFrom ?? '#667eea'}, ${state.background.gradientTo ?? '#764ba2'})` }
         : state.background.type === 'image' && state.background.imageDataUrl
-          ? { backgroundImage: `url(${state.background.imageDataUrl})`, backgroundSize: 'cover' }
+          ? { backgroundImage: `url(${state.background.imageDataUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
           : {}
 
     return (
-      <div className="relative w-full h-full" style={bgStyle}>
-        <Canvas
-          camera={{ position: cameraPos, fov: 35 }}
-          shadows={state.shadow}
-          gl={{ preserveDrawingBuffer: true, antialias: true, alpha: true }}
-          style={{ background: 'transparent' }}
-        >
-          <SceneBackground background={state.background} />
-          <CameraController angle={state.cameraAngle} />
-          <Exporter onReady={(fn) => { exportFnRef.current = fn }} />
+      <CanvasErrorBoundary>
+        <div className="relative w-full h-full" style={bgStyle}>
+          <Canvas
+            camera={{ position: camPresets[state.cameraAngle], fov: 45 }}
+            shadows={!!shadowCfg}
+            gl={{ preserveDrawingBuffer: true, antialias: true, alpha: true, toneMapping: THREE.NoToneMapping }}
+            style={{ background: 'transparent' }}
+          >
+            <SceneBg background={state.background} />
+            <CameraPreset angle={state.cameraAngle} presets={camPresets} />
+            <Exporter onReady={(fn) => { exportFnRef.current = fn }} />
+            <StudioLighting shadow={!!shadowCfg} />
 
-          <ambientLight intensity={0.4} />
-          <directionalLight
-            position={[8, 12, 8]}
-            intensity={1.2}
-            castShadow={state.shadow}
-            shadow-mapSize={[2048, 2048]}
-          />
-          <directionalLight position={[-6, 4, -4]} intensity={0.3} />
+            <Suspense fallback={null}>
+              <DeviceModel
+                gltfPath={device.gltfPath}
+                colorHex={color.hex}
+                screenshotUrl={state.screenshot}
+                shadow={!!shadowCfg}
+                modelScale={device.modelScale}
+              />
+            </Suspense>
 
-          <Environment preset="city" />
+            {shadowCfg && (
+              <ContactShadows
+                position={[0, -7, 0]}
+                opacity={shadowCfg.opacity}
+                scale={shadowCfg.scale}
+                blur={shadowCfg.blur}
+                far={shadowCfg.far}
+              />
+            )}
 
-          <Suspense fallback={null}>
-            <PhoneModel
-              gltfPath={device.gltfPath}
-              colorHex={color.hex}
-              screenshotUrl={state.screenshot}
-              shadow={state.shadow}
-            />
-          </Suspense>
-
-          {state.shadow && (
-            <ContactShadows
-              position={[0, -9, 0]}
-              opacity={0.5}
-              scale={20}
-              blur={2}
-              far={12}
-            />
-          )}
-
-          <OrbitControls
-            enablePan={false}
-            minDistance={8}
-            maxDistance={40}
-            target={[0, 0, 0]}
-          />
-        </Canvas>
-      </div>
+            <OrbitControls enablePan={false} minDistance={3} maxDistance={60} />
+          </Canvas>
+        </div>
+      </CanvasErrorBoundary>
     )
   }
 )

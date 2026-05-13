@@ -18,7 +18,6 @@ import base64
 import plistlib
 import subprocess
 import tempfile
-import math
 from pathlib import Path
 
 
@@ -255,7 +254,7 @@ def build_gltf(meshes_data):
         pad = (4 - len(data) % 4) % 4
         data = data + b'\x00' * pad
         buffer_chunks.append(data)
-        bv = {'byteOffset': offset, 'byteLength': len(data) - pad}
+        bv = {'buffer': 0, 'byteOffset': offset, 'byteLength': len(data) - pad}
         if target:
             bv['target'] = target
         buffer_views.append(bv)
