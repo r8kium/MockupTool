@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { BackgroundConfig, DeviceId, EditorState } from '@/types'
+import { DEVICE_MODELS } from '@/lib/frames'
 
 export type ShadowPreset = 'none' | 'soft' | 'long' | 'short'
 
@@ -28,10 +29,15 @@ const DEFAULT_STATE: FullState = {
 
 export const useEditorStore = create<FullState & EditorActions>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...DEFAULT_STATE,
       setScreenshot: (screenshot) => set({ screenshot }),
-      setDevice: (deviceId) => set({ deviceId }),
+      setDevice: (deviceId) => {
+        const device = DEVICE_MODELS[deviceId]
+        const currentColorId = get().colorId
+        const colorValid = device.colors.some((c) => c.id === currentColorId)
+        set({ deviceId, colorId: colorValid ? currentColorId : device.colors[0].id })
+      },
       setColor: (colorId) => set({ colorId }),
       setBackground: (background) => set({ background }),
       setShadowPreset: (shadowPreset) => set({ shadowPreset, shadow: shadowPreset !== 'none' }),

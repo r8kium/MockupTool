@@ -2,7 +2,6 @@ export type DeviceCategory = 'iphone' | 'ipad' | 'mac' | 'watch' | 'android' | '
 
 export type DeviceId =
   // iPhones
-  | 'iphone-16-pro'
   | 'iphone-15-pro'
   | 'iphone-15-pro-max'
   | 'iphone-15'

@@ -16,10 +16,38 @@ import type { ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
 
 const BODY_MESHES = new Set([
+  // iPhone / phone body
   'Edge', 'Edge_Antenna', 'Edge_Clean', 'Back', 'Matte', 'Gray',
   'Back_Glass', 'Glass_Back', 'Screen_Edge',
+  // Generic device body
   'Body', 'Keyboard', 'Trackpad', 'Base', 'Lid', 'Hinge',
   'Bottom', 'Top', 'Frame', 'Band', 'Case',
+  // Mac _Top / _Bottom variants (MacBook Air M2, MacBook Pro M3)
+  'Body_Top', 'Gray_Top', 'Light_Gray', 'Matte_Top',
+  'Screen_Edge_Top', 'Screen_edge_Top', 'Screen_Edge_Island',
+  'Bottom_Body', 'Bottom_TouchPad', 'Top_Body',
+  // Mac keyboard / peripherals
+  'Keys', 'Keys_Text', 'Key_Text', 'MousePad',
+  'Power_key', 'PowerButton', 'FingerPrint', 'Port_Metal', 'USB',
+  // iPhone 17 / iPad primitive body meshes
+  'primitive_0', 'primitive_1', 'primitive_2',
+  'primitive_3', 'primitive_4', 'primitive_5', 'primitive_6',
+  // MacBook Pro M1 16" variants
+  'Body_Bottom', 'FingerPrint_Edge', 'Plastic_Screen', 'Key_text',
+  // MacBook Air M1 variants
+  'Caps_Key', 'Bottom_Body_001', 'Screen_Bottom', 'Key', 'Metals',
+  // iMac 24" variants
+  'Body_Light_001', 'Body_Light_002', 'Body_Light_003',
+  'Metal', 'Power', 'Screw', 'Plane_001', 'Plane',
+  // iPad + Magic Keyboard variants
+  'Charger_icon', 'Small_Circle', 'LiDAR',
+  // Apple Watch Ultra 2 variants
+  'Antenna', 'Body_Polished', 'Body_Rough', 'Button_Glossy',
+  'Loop', 'Loop_Shape', 'Cube',
+  // Samsung Galaxy (numbered variants)
+  'Matte_001',
+  // Surface Laptop 4
+  'Body_Darker', 'Device_001', 'Text', 'Body_001',
 ])
 
 const SHADOW_CONFIGS: Record<ShadowPreset, { opacity: number; scale: number; blur: number; far: number } | null> = {
@@ -87,7 +115,7 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: 
       if (name.toLowerCase().includes('shadow') || name === 'rotatoTag') {
         node.visible = false; return
       }
-      if (name === 'Screen') {
+      if (name === 'Screen' || name === 'Screen_Top') {
         if (screenshotTex) {
           const uvAttr = node.geometry.attributes.uv as THREE.BufferAttribute | undefined
           if (uvAttr) {
@@ -108,7 +136,10 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: 
         })
         node.receiveShadow = false; return
       }
-      if (name === 'Glass' || name === 'Glass_Screen') {
+      if (
+        name === 'Glass' || name === 'Glass_Screen' ||
+        name === 'Glass_Top' || name === 'Glass_Screen_Top'
+      ) {
         if (screenshotTex) { node.visible = false } else {
           node.visible = true
           node.material = new THREE.MeshPhysicalMaterial({
@@ -122,14 +153,43 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale }: 
       if (name.includes('Glass_Lens') || name.includes('Glass_Camera') || name === 'Glass_Back') {
         node.material = new THREE.MeshPhysicalMaterial({ color: '#0a0a0a', roughness: 0.05, metalness: 0.1, transmission: 0.2 }); return
       }
-      if (name.includes('Lens') || name === 'Camera_Module' || name === 'Camera_Edge') {
+      // Dynamic Island and related elements (iPhone 16/17)
+      if (
+        name === 'Dynamic_Island' || name === 'Island' ||
+        name === 'Glass_Island' || name === 'Gray_Island' ||
+        name === 'Lens_Island' || name === 'Sensor_Island' || name === 'Sensor_island'
+      ) {
+        node.material = new THREE.MeshStandardMaterial({ color: '#0a0a0a', roughness: 0.2, metalness: 0.5 }); return
+      }
+      // Rougher glass variants (Galaxy S25, iPhone 16)
+      if (name === 'GlassRough' || name === 'Glass_Rough') {
+        node.material = new THREE.MeshPhysicalMaterial({
+          color: '#ffffff', transmission: 0.4, roughness: 0.15,
+          metalness: 0, thickness: 0.3, transparent: true, opacity: 0.4, depthWrite: false,
+        })
+        node.visible = !screenshotTex
+        node.renderOrder = 2; return
+      }
+      // Black ring / bezel elements (Galaxy S25)
+      if (name === 'BlackRing' || name === 'Front_Gray') {
+        node.material = new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.4, metalness: 0.6 }); return
+      }
+      if (name.includes('Lens') || name === 'Camera_Module' || name === 'Camera_Edge' || name === 'Front_Lens') {
         node.material = new THREE.MeshStandardMaterial({ color: '#0d0d0d', roughness: 0.2, metalness: 0.9 }); return
       }
       if (name === 'Flash') {
         node.material = new THREE.MeshStandardMaterial({ color: '#fff5cc', roughness: 0.1, metalness: 0.5 }); return
       }
-      if (name === 'Black' || name === 'Sensor' || name === 'Mic' || name === 'Plastic') {
+      if (
+        name === 'Black' || name === 'Sensor' || name === 'Sensor_2' || name === 'Mic' ||
+        name === 'Plastic' || name === 'Plastic_Top' || name === 'Bottom_Plastic' ||
+        name === 'Hinge_BlackBox' || name === 'Screen_Edge_Black'
+      ) {
         node.material = new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.5, metalness: 0.4 }); return
+      }
+      // Watch Ultra orange action button
+      if (name === 'Body_Orange') {
+        node.material = new THREE.MeshStandardMaterial({ color: '#e06020', roughness: 0.3, metalness: 0.3 }); return
       }
       if (BODY_MESHES.has(name)) {
         node.material = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.22, metalness: 0.88 })
@@ -178,8 +238,8 @@ function SceneBg({ background }: { background: EditorState['background'] }) {
   return null
 }
 
-// ── Camera preset ──────────────────────────────────────────────────────────────
-function CameraPreset({
+// ── Camera controller (preset + orbit, kept in sync) ──────────────────────────
+function CameraController({
   angle,
   presets,
 }: {
@@ -187,11 +247,25 @@ function CameraPreset({
   presets: Record<EditorState['cameraAngle'], [number, number, number]>
 }) {
   const { camera } = useThree()
+  const controlsRef = useRef<any>(null)
+
   useEffect(() => {
-    camera.position.set(...presets[angle])
-    camera.lookAt(0, 0, 0)
+    const pos = presets[angle]
+    camera.position.set(...pos)
+    if (controlsRef.current) {
+      controlsRef.current.target.set(0, 0, 0)
+      controlsRef.current.update()
+    }
   }, [angle, presets, camera])
-  return null
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      enablePan={false}
+      minDistance={3}
+      maxDistance={60}
+    />
+  )
 }
 
 // ── Export helper ──────────────────────────────────────────────────────────────
@@ -239,7 +313,7 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
             style={{ background: 'transparent' }}
           >
             <SceneBg background={state.background} />
-            <CameraPreset angle={state.cameraAngle} presets={camPresets} />
+            <CameraController angle={state.cameraAngle} presets={camPresets} />
             <Exporter onReady={(fn) => { exportFnRef.current = fn }} />
             <StudioLighting shadow={!!shadowCfg} />
 
@@ -263,7 +337,6 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
               />
             )}
 
-            <OrbitControls enablePan={false} minDistance={3} maxDistance={60} />
           </Canvas>
         </div>
       </CanvasErrorBoundary>
