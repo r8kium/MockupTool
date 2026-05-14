@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { useEditorStore, type ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
+import { ANIM_TEMPLATES } from '@/lib/animTemplates'
 import type { BackgroundConfig, BackgroundType } from '@/types'
 import { cn, readFileAsDataUrl } from '@/lib/utils'
 
@@ -78,6 +79,56 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
   return (
     <aside className="w-[280px] flex-shrink-0 bg-[#252525] border-l border-white/5 overflow-y-auto flex flex-col">
 
+      {/* Animation */}
+      <Section title="Animation" defaultOpen={false}>
+        <div className="grid grid-cols-2 gap-2">
+          {/* None card */}
+          <button
+            onClick={() => state.setAnimTemplate(null)}
+            className={cn(
+              'relative rounded-lg overflow-hidden border-2 transition-all aspect-video flex items-center justify-center text-xs font-medium',
+              state.animTemplateId === null
+                ? 'border-blue-500 text-blue-300 bg-blue-500/10'
+                : 'border-white/10 text-white/40 hover:border-white/30 hover:text-white/60 bg-white/3'
+            )}
+          >
+            None
+          </button>
+
+          {ANIM_TEMPLATES.map((tpl) => (
+            <button
+              key={tpl.id}
+              onClick={() => state.setAnimTemplate(tpl.id)}
+              className={cn(
+                'relative rounded-lg overflow-hidden border-2 transition-all aspect-video group',
+                state.animTemplateId === tpl.id
+                  ? 'border-blue-500'
+                  : 'border-white/10 hover:border-white/30'
+              )}
+            >
+              <video
+                src={tpl.previewPath}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              <div className={cn(
+                'absolute inset-0 flex items-end p-1.5 bg-gradient-to-t from-black/70 to-transparent',
+                'opacity-0 group-hover:opacity-100 transition-opacity',
+                state.animTemplateId === tpl.id && 'opacity-100'
+              )}>
+                <span className="text-[10px] font-medium text-white leading-tight">{tpl.name}</span>
+              </div>
+              {state.animTemplateId === tpl.id && (
+                <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-400" />
+              )}
+            </button>
+          ))}
+        </div>
+      </Section>
+
       {/* Device */}
       <Section title="Device">
         <button
@@ -117,8 +168,10 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
 
         {/* Camera angle */}
         <div>
-          <p className="text-xs text-white/40 mb-2">View</p>
-          <div className="grid grid-cols-3 gap-1">
+          <p className="text-xs text-white/40 mb-2">
+            View{state.animTemplateId && <span className="ml-1.5 text-white/25">(overridden by animation)</span>}
+          </p>
+          <div className={cn('grid grid-cols-3 gap-1', state.animTemplateId && 'opacity-30 pointer-events-none')}>
             {(['front', 'isometric', 'side'] as const).map((angle) => (
               <button
                 key={angle}

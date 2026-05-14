@@ -111,6 +111,22 @@ export interface SceneTemplate {
   }
 }
 
+// ── Animation templates ──────────────────────────────────────────────────────
+
+export interface AnimKeyframe {
+  cam: [number, number, number]
+  roll: number
+  duration: number
+  easing: [number, number, number, number]
+}
+
+export interface AnimTemplate {
+  id: string
+  name: string
+  previewPath: string
+  keyframes: AnimKeyframe[]
+}
+
 export type BackgroundType = 'transparent' | 'solid' | 'gradient' | 'image'
 
 export interface BackgroundConfig {

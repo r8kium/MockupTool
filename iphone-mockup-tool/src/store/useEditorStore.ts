@@ -12,10 +12,11 @@ interface EditorActions {
   setBackground: (bg: BackgroundConfig) => void
   setShadowPreset: (preset: ShadowPreset) => void
   setCameraAngle: (angle: EditorState['cameraAngle']) => void
+  setAnimTemplate: (id: string | null) => void
   reset: () => void
 }
 
-type FullState = EditorState & { shadowPreset: ShadowPreset }
+type FullState = EditorState & { shadowPreset: ShadowPreset; animTemplateId: string | null }
 
 const DEFAULT_STATE: FullState = {
   screenshot: null,
@@ -25,6 +26,7 @@ const DEFAULT_STATE: FullState = {
   shadow: true,
   shadowPreset: 'long',
   cameraAngle: 'isometric',
+  animTemplateId: null,
 }
 
 export const useEditorStore = create<FullState & EditorActions>()(
@@ -42,6 +44,7 @@ export const useEditorStore = create<FullState & EditorActions>()(
       setBackground: (background) => set({ background }),
       setShadowPreset: (shadowPreset) => set({ shadowPreset, shadow: shadowPreset !== 'none' }),
       setCameraAngle: (cameraAngle) => set({ cameraAngle }),
+      setAnimTemplate: (animTemplateId) => set({ animTemplateId }),
       reset: () => set({ ...DEFAULT_STATE }),
     }),
     {

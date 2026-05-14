@@ -5,6 +5,7 @@ import type { ThreeCanvasRef } from '@/components/ThreeCanvas'
 import { RightPanel } from '@/components/RightPanel'
 import { useEditorStore } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
+import { ANIM_TEMPLATE_MAP } from '@/lib/animTemplates'
 import { readFileAsDataUrl } from '@/lib/utils'
 
 interface Props {
@@ -16,6 +17,7 @@ export function Editor({ onBack }: Props) {
   const uploadRef = useRef<HTMLInputElement>(null)
   const state  = useEditorStore()
   const device = DEVICE_MODELS[state.deviceId]
+  const animTemplate = state.animTemplateId ? ANIM_TEMPLATE_MAP[state.animTemplateId] ?? null : null
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -81,6 +83,7 @@ export function Editor({ onBack }: Props) {
             state={state}
             canvasRef={canvasRef}
             onScreenshotUpload={state.setScreenshot}
+            animTemplate={animTemplate}
           />
         </div>
 

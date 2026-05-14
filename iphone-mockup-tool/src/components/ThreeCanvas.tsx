@@ -9,10 +9,10 @@ import {
   type ReactNode,
   type MutableRefObject,
 } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { useGLTF, ContactShadows, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
-import type { EditorState, SceneTemplate } from '@/types'
+import type { AnimTemplate, EditorState, SceneTemplate } from '@/types'
 import type { ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
 import { readFileAsDataUrl } from '@/lib/utils'
@@ -239,6 +239,58 @@ function SceneBg({ background }: { background: EditorState['background'] }) {
   return null
 }
 
+// ── Cubic bezier easing evaluator ────────────────────────────────────────────────
+function evalBezier(c1x: number, c1y: number, c2x: number, c2y: number, t: number): number {
+  let s0 = 0, s1 = 1
+  for (let i = 0; i < 12; i++) {
+    const sm = (s0 + s1) / 2
+    const bx = 3 * sm * (1 - sm) * (1 - sm) * c1x + 3 * sm * sm * (1 - sm) * c2x + sm * sm * sm
+    if (bx < t) s0 = sm; else s1 = sm
+  }
+  const s = (s0 + s1) / 2
+  return 3 * s * (1 - s) * (1 - s) * c1y + 3 * s * s * (1 - s) * c2y + s * s * s
+}
+
+// ── Animated camera ───────────────────────────────────────────────────────────────
+function AnimatedCamera({ template }: { template: AnimTemplate }) {
+  const { camera } = useThree()
+  const elapsedRef = useRef(0)
+  const totalDuration = useMemo(
+    () => template.keyframes.reduce((s, kf) => s + kf.duration, 0),
+    [template]
+  )
+
+  useEffect(() => { elapsedRef.current = 0 }, [template])
+
+  useFrame((_, delta) => {
+    elapsedRef.current = (elapsedRef.current + delta) % totalDuration
+    const t = elapsedRef.current
+    const kfs = template.keyframes
+    const n = kfs.length
+    let segStart = 0
+    for (let i = 0; i < n; i++) {
+      const segEnd = segStart + kfs[i].duration
+      if (t <= segEnd || i === n - 1) {
+        const progress = kfs[i].duration > 0 ? Math.min((t - segStart) / kfs[i].duration, 1) : 1
+        const [c1x, c1y, c2x, c2y] = kfs[i].easing
+        const ep = evalBezier(c1x, c1y, c2x, c2y, progress)
+        const next = kfs[(i + 1) % n]
+        const cx = kfs[i].cam[0] + (next.cam[0] - kfs[i].cam[0]) * ep
+        const cy = kfs[i].cam[1] + (next.cam[1] - kfs[i].cam[1]) * ep
+        const cz = kfs[i].cam[2] + (next.cam[2] - kfs[i].cam[2]) * ep
+        const roll = kfs[i].roll + (next.roll - kfs[i].roll) * ep
+        camera.position.set(cx, cy, cz)
+        camera.lookAt(0, 0, 0)
+        camera.rotateZ((roll * Math.PI) / 180)
+        break
+      }
+      segStart = segEnd
+    }
+  })
+
+  return null
+}
+
 // ── Camera controller ────────────────────────────────────────────────────────────
 function CameraController({ angle, presets }: {
   angle: EditorState['cameraAngle']
@@ -273,10 +325,11 @@ interface ThreeCanvasProps {
   sceneTemplate?: SceneTemplate
   slotScreenshots?: Record<number, string | null>
   onSlotScreenshotUpload?: (slotIndex: number, dataUrl: string) => void
+  animTemplate?: AnimTemplate | null
 }
 
 export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
-  function ThreeCanvas({ state, canvasRef, onScreenshotUpload, sceneTemplate, slotScreenshots, onSlotScreenshotUpload }, _ref) {
+  function ThreeCanvas({ state, canvasRef, onScreenshotUpload, sceneTemplate, slotScreenshots, onSlotScreenshotUpload, animTemplate }, _ref) {
     const exportFnRef   = useRef<(() => string) | null>(null)
     const fileInputRef  = useRef<HTMLInputElement>(null)
     const slotRefs      = useRef<Record<number, HTMLInputElement | null>>({})
@@ -320,7 +373,10 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
             style={{ background: 'transparent' }}
           >
             <SceneBg background={state.background} />
-            <CameraController angle={state.cameraAngle} presets={camPresets} />
+            {animTemplate
+              ? <AnimatedCamera template={animTemplate} />
+              : <CameraController angle={state.cameraAngle} presets={camPresets} />
+            }
             <Exporter onReady={(fn) => { exportFnRef.current = fn }} />
             <StudioLighting shadow={!!shadowCfg} />
 
