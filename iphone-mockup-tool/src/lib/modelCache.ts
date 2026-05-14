@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 
-export type ModelStatus = 'idle' | 'loading' | 'loaded'
+export type ModelStatus = 'idle' | 'loading' | 'loaded' | 'error'
 
 const statusMap = new Map<string, ModelStatus>()
 let version = 0
@@ -25,16 +25,29 @@ export function markLoaded(url: string) {
   }
 }
 
-// Catch models completing via preload (no DeviceModel renders them)
+export function markError(url: string) {
+  statusMap.set(url, 'error')
+  bump()
+}
+
+// Catch models completing or erroring via preload
 const mgr = THREE.DefaultLoadingManager
 const _onProgress = mgr.onProgress?.bind(mgr)
+const _onError    = mgr.onError?.bind(mgr)
+
 mgr.onProgress = (url: string, loaded: number, total: number) => {
   _onProgress?.(url, loaded, total)
   if (url.endsWith('.gltf') || url.endsWith('.glb')) markLoaded(url)
 }
 
+mgr.onError = (url: string) => {
+  _onError?.(url)
+  if (url.endsWith('.gltf') || url.endsWith('.glb')) markError(url)
+}
+
 export function preloadModel(url: string) {
-  if (statusMap.get(url) === 'loaded') return
+  const s = statusMap.get(url)
+  if (s === 'loaded' || s === 'loading') return
   statusMap.set(url, 'loading')
   bump()
   useGLTF.preload(url)
@@ -42,6 +55,11 @@ export function preloadModel(url: string) {
 
 export function preloadAll(urls: string[]) {
   urls.forEach(preloadModel)
+}
+
+export function retryModel(url: string) {
+  statusMap.delete(url)
+  preloadModel(url)
 }
 
 export function useModelStatus(url: string): ModelStatus {

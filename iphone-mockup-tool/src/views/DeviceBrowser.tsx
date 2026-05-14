@@ -5,7 +5,7 @@ import { SCENE_TEMPLATES } from '@/lib/compositions'
 import { useEditorStore } from '@/store/useEditorStore'
 import type { DeviceCategory, DeviceId, SceneTemplate } from '@/types'
 import { cn } from '@/lib/utils'
-import { useModelStatus, useLoadedCount, preloadAll } from '@/lib/modelCache'
+import { useModelStatus, useLoadedCount, preloadAll, retryModel } from '@/lib/modelCache'
 
 interface Props {
   onSelect: (id: DeviceId) => void
@@ -219,6 +219,15 @@ function DeviceCard({ name, thumbnailPath, gltfPath, active, onClick }: {
           )}
           {status === 'loading' && (
             <Loader2 className="w-3 h-3 text-violet-400/80 animate-spin" />
+          )}
+          {status === 'error' && (
+            <button
+              onClick={(e) => { e.stopPropagation(); retryModel(gltfPath) }}
+              title="Failed to load — click to retry"
+              className="w-4 h-4 rounded-full bg-red-500/20 border border-red-500/40 text-red-400 text-[8px] font-bold flex items-center justify-center hover:bg-red-500/35 transition-colors"
+            >
+              !
+            </button>
           )}
           {status === 'idle' && (
             <CloudDownload className="w-3 h-3 text-white/15 opacity-0 group-hover:opacity-100 transition-opacity" />

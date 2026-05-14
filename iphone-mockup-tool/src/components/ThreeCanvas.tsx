@@ -20,7 +20,7 @@ import { readFileAsDataUrl, evalBezier } from '@/lib/utils'
 import { animClock } from '@/lib/animClock'
 import { getPresetCss } from '@/lib/backgrounds'
 import { AnimatedBackground } from '@/components/AnimatedBackground'
-import { markLoaded } from '@/lib/modelCache'
+import { markLoaded, markError, retryModel } from '@/lib/modelCache'
 
 // ── Material constants (module-level, shared across all device instances) ───────
 const M = {
@@ -134,54 +134,64 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { error: Er
   }
 }
 
+// ── Per-model error boundary ──────────────────────────────────────────────────────
+class ModelErrorBoundary extends Component<
+  { gltfPath: string; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false }
+  static getDerivedStateFromError() { return { failed: true } }
+  componentDidCatch() { markError(this.props.gltfPath) }
+  render() {
+    if (this.state.failed) return null
+    return this.props.children
+  }
+}
+
 // ── Loading overlay ───────────────────────────────────────────────────────────────
 function LoadingOverlay() {
-  const { active, progress, item } = useProgress()
+  const { active, item } = useProgress()
   if (!active) return null
 
-  const SIZE = 72
+  const SIZE   = 72
   const STROKE = 3.5
-  const r = (SIZE - STROKE) / 2
-  const circ = 2 * Math.PI * r
-  const filled = (progress / 100) * circ
+  const r      = (SIZE - STROKE) / 2
+  const circ   = 2 * Math.PI * r
+  const arc    = circ * 0.72  // 72% arc — visible "chasing" gap
 
-  // Extract a friendly model name from the URL
   const modelName = item
-    ? item.split('/').pop()?.replace('.gltf', '').replace('.glb', '').replace(/-/g, ' ') ?? ''
+    ? item.split('/').pop()?.replace(/\.(gltf|glb)$/, '').replace(/-/g, ' ') ?? ''
     : ''
 
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/50 backdrop-blur-md">
 
-      {/* Ring */}
-      <div className="relative" style={{ width: SIZE, height: SIZE }}>
-        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
+      {/* Indeterminate spinning ring */}
+      <div style={{ width: SIZE, height: SIZE }}>
+        <svg width={SIZE} height={SIZE}
+          className="animate-spin"
+          style={{ animationDuration: '1.1s', animationTimingFunction: 'linear' }}
+        >
           <defs>
             <filter id="ring-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feGaussianBlur stdDeviation="2.5" result="blur" />
               <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
           </defs>
           {/* Track */}
           <circle cx={SIZE / 2} cy={SIZE / 2} r={r}
-            fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} />
-          {/* Progress arc */}
+            fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={STROKE} />
+          {/* Arc — starts at top (-90°), spans 72% of circumference */}
           <circle cx={SIZE / 2} cy={SIZE / 2} r={r}
             fill="none"
-            stroke="rgba(139,92,246,0.9)"
+            stroke="rgba(139,92,246,0.92)"
             strokeWidth={STROKE}
             strokeLinecap="round"
-            strokeDasharray={`${filled} ${circ}`}
+            strokeDasharray={`${arc} ${circ}`}
+            strokeDashoffset={circ * 0.25}
             filter="url(#ring-glow)"
-            style={{ transition: 'stroke-dasharray 0.25s ease' }}
           />
         </svg>
-        {/* Percentage in center */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-white/90 text-sm font-semibold tabular-nums">
-            {Math.round(progress)}%
-          </span>
-        </div>
       </div>
 
       {/* Labels */}
@@ -513,26 +523,30 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
                   const rot = slot.rotation.map((d) => (d * Math.PI) / 180) as [number, number, number]
                   return (
                     <group key={i} position={slot.position} rotation={rot}>
-                      <DeviceModel
-                        gltfPath={dev.gltfPath}
-                        colorHex={dev.colors[0].hex}
-                        screenshotUrl={slotScreenshots?.[i] ?? null}
-                        shadow={!!shadowCfg}
-                        modelScale={dev.modelScale * (slot.scaleMul ?? 1)}
-                        onScreenClick={onSlotScreenshotUpload ? () => slotRefs.current[i]?.click() : undefined}
-                      />
+                      <ModelErrorBoundary gltfPath={dev.gltfPath}>
+                        <DeviceModel
+                          gltfPath={dev.gltfPath}
+                          colorHex={dev.colors[0].hex}
+                          screenshotUrl={slotScreenshots?.[i] ?? null}
+                          shadow={!!shadowCfg}
+                          modelScale={dev.modelScale * (slot.scaleMul ?? 1)}
+                          onScreenClick={onSlotScreenshotUpload ? () => slotRefs.current[i]?.click() : undefined}
+                        />
+                      </ModelErrorBoundary>
                     </group>
                   )
                 })
               ) : (
-                <DeviceModel
-                  gltfPath={device.gltfPath}
-                  colorHex={colorHex}
-                  screenshotUrl={state.screenshot}
-                  shadow={!!shadowCfg}
-                  modelScale={device.modelScale}
-                  onScreenClick={onScreenshotUpload ? () => fileInputRef.current?.click() : undefined}
-                />
+                <ModelErrorBoundary gltfPath={device.gltfPath}>
+                  <DeviceModel
+                    gltfPath={device.gltfPath}
+                    colorHex={colorHex}
+                    screenshotUrl={state.screenshot}
+                    shadow={!!shadowCfg}
+                    modelScale={device.modelScale}
+                    onScreenClick={onScreenshotUpload ? () => fileInputRef.current?.click() : undefined}
+                  />
+                </ModelErrorBoundary>
               )}
             </Suspense>
 
