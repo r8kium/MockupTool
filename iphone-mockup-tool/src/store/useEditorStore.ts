@@ -9,6 +9,7 @@ interface EditorActions {
   setScreenshot: (dataUrl: string | null) => void
   setDevice: (deviceId: DeviceId) => void
   setColor: (colorId: string) => void
+  setCustomColor: (hex: string) => void
   setBackground: (bg: BackgroundConfig) => void
   setShadowPreset: (preset: ShadowPreset) => void
   setCameraAngle: (angle: EditorState['cameraAngle']) => void
@@ -22,6 +23,7 @@ const DEFAULT_STATE: FullState = {
   screenshot: null,
   deviceId: 'iphone-15-pro',
   colorId: 'natural',
+  customColorHex: null,
   background: { type: 'transparent' },
   shadow: true,
   shadowPreset: 'long',
@@ -40,7 +42,8 @@ export const useEditorStore = create<FullState & EditorActions>()(
         const colorValid = device.colors.some((c) => c.id === currentColorId)
         set({ deviceId, colorId: colorValid ? currentColorId : device.colors[0].id })
       },
-      setColor: (colorId) => set({ colorId }),
+      setColor: (colorId) => set({ colorId, customColorHex: null }),
+      setCustomColor: (hex) => set({ colorId: 'custom', customColorHex: hex }),
       setBackground: (background) => set({ background }),
       setShadowPreset: (shadowPreset) => set({ shadowPreset, shadow: shadowPreset !== 'none' }),
       setCameraAngle: (cameraAngle) => set({ cameraAngle }),

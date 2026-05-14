@@ -15,7 +15,10 @@ import * as THREE from 'three'
 import type { AnimTemplate, EditorState, SceneTemplate } from '@/types'
 import type { ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
-import { readFileAsDataUrl } from '@/lib/utils'
+import { readFileAsDataUrl, evalBezier } from '@/lib/utils'
+import { animClock } from '@/lib/animClock'
+import { getPresetCss } from '@/lib/backgrounds'
+import { AnimatedBackground } from '@/components/AnimatedBackground'
 
 // ── Material constants (module-level, shared across all device instances) ───────
 const M = {
@@ -163,7 +166,13 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale, on
 
       if (SCREEN_MESHES.has(n)) {
         if (screenshotTex) normalizeScreenUV(node, screenshotTex)
-        node.material = new THREE.MeshBasicMaterial({ map: screenshotTex ?? null, color: screenshotTex ? '#ffffff' : '#050505' })
+        node.material = new THREE.MeshBasicMaterial({
+          map: screenshotTex ?? null,
+          color: screenshotTex ? '#ffffff' : '#050505',
+          polygonOffset: true,
+          polygonOffsetFactor: 4,
+          polygonOffsetUnits: 4,
+        })
         node.receiveShadow = false
         return
       }
@@ -239,18 +248,6 @@ function SceneBg({ background }: { background: EditorState['background'] }) {
   return null
 }
 
-// ── Cubic bezier easing evaluator ────────────────────────────────────────────────
-function evalBezier(c1x: number, c1y: number, c2x: number, c2y: number, t: number): number {
-  let s0 = 0, s1 = 1
-  for (let i = 0; i < 12; i++) {
-    const sm = (s0 + s1) / 2
-    const bx = 3 * sm * (1 - sm) * (1 - sm) * c1x + 3 * sm * sm * (1 - sm) * c2x + sm * sm * sm
-    if (bx < t) s0 = sm; else s1 = sm
-  }
-  const s = (s0 + s1) / 2
-  return 3 * s * (1 - s) * (1 - s) * c1y + 3 * s * s * (1 - s) * c2y + s * s * s
-}
-
 // ── Animated camera ───────────────────────────────────────────────────────────────
 function AnimatedCamera({ template }: { template: AnimTemplate }) {
   const { camera } = useThree()
@@ -260,10 +257,14 @@ function AnimatedCamera({ template }: { template: AnimTemplate }) {
     [template]
   )
 
-  useEffect(() => { elapsedRef.current = 0 }, [template])
+  useEffect(() => {
+    elapsedRef.current = 0
+    animClock.templateId = template.id
+  }, [template])
 
   useFrame((_, delta) => {
     elapsedRef.current = (elapsedRef.current + delta) % totalDuration
+    animClock.elapsed = elapsedRef.current
     const t = elapsedRef.current
     const kfs = template.keyframes
     const n = kfs.length
@@ -292,12 +293,15 @@ function AnimatedCamera({ template }: { template: AnimTemplate }) {
 }
 
 // ── Camera controller ────────────────────────────────────────────────────────────
-function CameraController({ angle, presets }: {
+function CameraController({ angle, presets, onMount }: {
   angle: EditorState['cameraAngle']
   presets: Record<EditorState['cameraAngle'], [number, number, number]>
+  onMount?: () => void
 }) {
   const { camera } = useThree()
   const controlsRef = useRef<any>(null)
+
+  useEffect(() => { onMount?.() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     camera.position.set(...presets[angle])
@@ -335,7 +339,9 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
     const slotRefs      = useRef<Record<number, HTMLInputElement | null>>({})
 
     const device      = DEVICE_MODELS[state.deviceId]
-    const color       = device.colors.find((c) => c.id === state.colorId) ?? device.colors[0]
+    const colorHex    = state.colorId === 'custom' && state.customColorHex
+      ? state.customColorHex
+      : (device.colors.find((c) => c.id === state.colorId) ?? device.colors[0]).hex
     const shadowCfg   = SHADOW_CONFIGS[(state.shadowPreset ?? 'long') as ShadowPreset]
     const camPresets  = sceneTemplate?.camPresets ?? device.camPresets ?? DEFAULT_CAM
 
@@ -354,11 +360,16 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
         ? { background: `linear-gradient(${state.background.gradientAngle ?? 135}deg, ${state.background.gradientFrom ?? '#667eea'}, ${state.background.gradientTo ?? '#764ba2'})` }
         : state.background.type === 'image' && state.background.imageDataUrl
           ? { backgroundImage: `url(${state.background.imageDataUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-          : {}
+          : state.background.type === 'preset' && state.background.presetId
+            ? { background: getPresetCss(state.background.presetId) }
+            : {}
 
     return (
       <CanvasErrorBoundary>
         <div className="relative w-full h-full" style={bgStyle}>
+          {state.background.type === 'animated' && state.background.animBgId && (
+            <AnimatedBackground id={state.background.animBgId} />
+          )}
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
             onChange={(e) => onScreenshotUpload && onFileChange(e, onScreenshotUpload)} />
           {sceneTemplate?.slots.map((_, i) => (
@@ -375,7 +386,7 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
             <SceneBg background={state.background} />
             {animTemplate
               ? <AnimatedCamera template={animTemplate} />
-              : <CameraController angle={state.cameraAngle} presets={camPresets} />
+              : <CameraController angle={state.cameraAngle} presets={camPresets} onMount={() => { animClock.templateId = null }} />
             }
             <Exporter onReady={(fn) => { exportFnRef.current = fn }} />
             <StudioLighting shadow={!!shadowCfg} />
@@ -401,7 +412,7 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
               ) : (
                 <DeviceModel
                   gltfPath={device.gltfPath}
-                  colorHex={color.hex}
+                  colorHex={colorHex}
                   screenshotUrl={state.screenshot}
                   shadow={!!shadowCfg}
                   modelScale={device.modelScale}

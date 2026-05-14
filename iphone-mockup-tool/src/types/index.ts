@@ -127,7 +127,7 @@ export interface AnimTemplate {
   keyframes: AnimKeyframe[]
 }
 
-export type BackgroundType = 'transparent' | 'solid' | 'gradient' | 'image'
+export type BackgroundType = 'transparent' | 'solid' | 'gradient' | 'image' | 'preset' | 'animated'
 
 export interface BackgroundConfig {
   type: BackgroundType
@@ -136,12 +136,15 @@ export interface BackgroundConfig {
   gradientTo?: string
   gradientAngle?: number
   imageDataUrl?: string
+  presetId?: string
+  animBgId?: string
 }
 
 export interface EditorState {
   screenshot: string | null
   deviceId: DeviceId
   colorId: string
+  customColorHex: string | null
   background: BackgroundConfig
   shadow: boolean
   cameraAngle: 'front' | 'isometric' | 'side'

@@ -7,6 +7,23 @@ import { ANIM_TEMPLATES } from '@/lib/animTemplates'
 import { AnimThumbnail } from '@/components/AnimThumbnail'
 import type { BackgroundConfig, BackgroundType } from '@/types'
 import { cn, readFileAsDataUrl } from '@/lib/utils'
+import { PRESET_BACKGROUNDS } from '@/lib/backgrounds'
+import { ANIM_BACKGROUNDS } from '@/lib/animBackgrounds'
+
+const APPLE_COLORS = [
+  { hex: '#8D8D8D', label: 'Titanium' },
+  { hex: '#1D1D1F', label: 'Midnight' },
+  { hex: '#EDE0CE', label: 'Starlight' },
+  { hex: '#C0C0C0', label: 'Silver' },
+  { hex: '#C8A97E', label: 'Gold' },
+  { hex: '#B76E79', label: 'Rose Gold' },
+  { hex: '#4B3F72', label: 'Deep Purple' },
+  { hex: '#006E91', label: 'Pacific Blue' },
+  { hex: '#556B55', label: 'Alpine Green' },
+  { hex: '#CC0000', label: 'Product Red' },
+  { hex: '#F5D13F', label: 'Yellow' },
+  { hex: '#3C3C3C', label: 'Space Gray' },
+]
 
 const SHADOW_PRESETS: { id: ShadowPreset; label: string }[] = [
   { id: 'none',  label: 'None' },
@@ -65,6 +82,13 @@ function BgImageDropzone() {
 export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
   const state = useEditorStore()
   const device = DEVICE_MODELS[state.deviceId]
+  const [customHexInput, setCustomHexInput] = useState(state.customColorHex ?? '#ffffff')
+
+  const handleCustomHexCommit = (value: string) => {
+    if (/^#[0-9a-fA-F]{6}$/.test(value)) state.setCustomColor(value)
+  }
+
+  const [presetTab, setPresetTab] = useState<'css' | 'photos' | 'animated'>('css')
 
   const setType = (type: BackgroundType) => {
     const next: BackgroundConfig = { ...state.background, type }
@@ -143,8 +167,10 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
         </button>
 
         {/* Color swatches */}
-        <div>
-          <p className="text-xs text-white/40 mb-2">Color</p>
+        <div className="space-y-2.5">
+          <p className="text-xs text-white/40">Color</p>
+
+          {/* Device-specific colors */}
           <div className="flex flex-wrap gap-2">
             {device.colors.map((color) => (
               <button
@@ -153,13 +179,61 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
                 title={color.label}
                 className={cn(
                   'w-7 h-7 rounded-full border-2 transition-all',
-                  state.colorId === color.id
+                  state.colorId === color.id && !state.customColorHex
                     ? 'border-blue-400 scale-110'
                     : 'border-white/20 hover:border-white/50'
                 )}
                 style={{ background: color.hex }}
               />
             ))}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/8" />
+
+          {/* Apple-standard presets */}
+          <p className="text-xs text-white/25">More colors</p>
+          <div className="flex flex-wrap gap-2">
+            {APPLE_COLORS.map((color) => {
+              const active = state.colorId === 'custom' && state.customColorHex === color.hex
+              return (
+                <button
+                  key={color.hex}
+                  onClick={() => { state.setCustomColor(color.hex); setCustomHexInput(color.hex) }}
+                  title={color.label}
+                  className={cn(
+                    'w-7 h-7 rounded-full border-2 transition-all',
+                    active ? 'border-blue-400 scale-110' : 'border-white/20 hover:border-white/50'
+                  )}
+                  style={{ background: color.hex }}
+                />
+              )
+            })}
+          </div>
+
+          {/* Custom hex input */}
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={state.colorId === 'custom' && state.customColorHex ? state.customColorHex : customHexInput}
+              onChange={(e) => {
+                setCustomHexInput(e.target.value)
+                state.setCustomColor(e.target.value)
+              }}
+              className="w-8 h-8 rounded-lg cursor-pointer border border-white/10 bg-transparent flex-shrink-0"
+            />
+            <input
+              value={state.colorId === 'custom' && state.customColorHex ? state.customColorHex : customHexInput}
+              onChange={(e) => setCustomHexInput(e.target.value)}
+              onBlur={(e) => handleCustomHexCommit(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCustomHexCommit(customHexInput) }}
+              placeholder="#ffffff"
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-white/30"
+              maxLength={7}
+            />
+            {state.colorId === 'custom' && state.customColorHex && (
+              <span className="text-[10px] text-blue-400 font-medium whitespace-nowrap">Custom</span>
+            )}
           </div>
         </div>
 
@@ -189,22 +263,32 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
 
       {/* Background */}
       <Section title="Background">
-        {/* Type tabs */}
-        <div className="grid grid-cols-4 gap-1 bg-white/5 rounded-lg p-0.5">
-          {(['transparent', 'solid', 'gradient', 'image'] as BackgroundType[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setType(t)}
-              className={cn(
-                'py-1 rounded-md text-xs font-medium transition-colors capitalize',
-                state.background.type === t
-                  ? 'bg-white/15 text-white'
-                  : 'text-white/40 hover:text-white/70'
-              )}
-            >
-              {t === 'transparent' ? 'None' : t === 'gradient' ? 'Grad' : t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
-          ))}
+        {/* Type tabs — 5 columns (Preset covers both preset + animated) */}
+        <div className="grid grid-cols-5 gap-1 bg-white/5 rounded-lg p-0.5">
+          {(['transparent', 'solid', 'gradient', 'image', 'preset'] as const).map((t) => {
+            const isActive = t === 'preset'
+              ? (state.background.type === 'preset' || state.background.type === 'animated')
+              : state.background.type === t
+            return (
+              <button
+                key={t}
+                onClick={() => {
+                  if (t === 'preset' && (state.background.type === 'preset' || state.background.type === 'animated')) return
+                  setType(t)
+                  if (t === 'preset') setPresetTab('css')
+                }}
+                className={cn(
+                  'py-1 rounded-md text-[11px] font-medium transition-colors',
+                  isActive ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white/70'
+                )}
+              >
+                {t === 'transparent' ? 'None'
+                  : t === 'gradient' ? 'Grad'
+                  : t === 'preset' ? 'Preset'
+                  : t.charAt(0).toUpperCase() + t.slice(1)}
+              </button>
+            )
+          })}
         </div>
 
         {state.background.type === 'solid' && (
@@ -271,6 +355,171 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
         )}
 
         {state.background.type === 'image' && <BgImageDropzone />}
+
+        {(state.background.type === 'preset' || state.background.type === 'animated') && (
+          <div className="space-y-3">
+            {/* Sub-tabs: CSS / Photos / Animated */}
+            <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-lg p-0.5">
+              {(['css', 'photos', 'animated'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setPresetTab(tab)
+                    if (tab !== 'animated' && state.background.type === 'animated') {
+                      state.setBackground({ ...state.background, type: 'preset' })
+                    }
+                    if (tab === 'animated' && state.background.type !== 'animated') {
+                      state.setBackground({ ...state.background, type: 'animated' })
+                    }
+                  }}
+                  className={cn(
+                    'py-1 rounded-md text-[11px] font-medium transition-colors capitalize',
+                    (tab === 'animated' ? state.background.type === 'animated' : presetTab === tab && state.background.type === 'preset')
+                      ? 'bg-white/15 text-white'
+                      : 'text-white/40 hover:text-white/70',
+                  )}
+                >
+                  {tab === 'css' ? 'CSS' : tab === 'photos' ? 'Photos' : 'Animated'}
+                </button>
+              ))}
+            </div>
+
+            {/* CSS presets */}
+            {presetTab === 'css' && state.background.type === 'preset' && (
+              <div className="space-y-3">
+                {(
+                  [
+                    { key: 'mesh-dark',  label: 'Mesh Dark' },
+                    { key: 'mesh-light', label: 'Mesh Light' },
+                    { key: 'gradient',   label: 'Gradient' },
+                    { key: 'solid',      label: 'Studio' },
+                  ] as const
+                ).map(({ key, label }) => {
+                  const items = PRESET_BACKGROUNDS.filter((b) => b.category === key)
+                  return (
+                    <div key={key}>
+                      <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1.5">{label}</p>
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {items.map((bg) => {
+                          const active = state.background.presetId === bg.id
+                          return (
+                            <button
+                              key={bg.id}
+                              title={bg.name}
+                              onClick={() => state.setBackground({ ...state.background, type: 'preset', presetId: bg.id })}
+                              className={cn(
+                                'aspect-square rounded-md border-2 transition-all hover:scale-110',
+                                active
+                                  ? 'border-blue-400 scale-110 shadow-[0_0_0_1px_rgba(96,165,250,0.5)]'
+                                  : 'border-transparent hover:border-white/40',
+                              )}
+                              style={{ background: bg.css }}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Photo presets */}
+            {presetTab === 'photos' && state.background.type === 'preset' && (
+              <div className="space-y-3">
+                {(
+                  [
+                    { key: 'photo-dark',  label: 'Dark' },
+                    { key: 'photo-vivid', label: 'Vivid' },
+                    { key: 'photo-light', label: 'Light' },
+                  ] as const
+                ).map(({ key, label }) => {
+                  const items = PRESET_BACKGROUNDS.filter((b) => b.category === key)
+                  return (
+                    <div key={key}>
+                      <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1.5">{label}</p>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {items.map((bg) => {
+                          const active = state.background.presetId === bg.id
+                          return (
+                            <button
+                              key={bg.id}
+                              title={bg.name}
+                              onClick={() => state.setBackground({ ...state.background, type: 'preset', presetId: bg.id })}
+                              className={cn(
+                                'aspect-video rounded-md border-2 transition-all hover:scale-105 overflow-hidden',
+                                active
+                                  ? 'border-blue-400 shadow-[0_0_0_1px_rgba(96,165,250,0.5)]'
+                                  : 'border-transparent hover:border-white/40',
+                              )}
+                              style={{ background: bg.css }}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Animated presets */}
+            {state.background.type === 'animated' && (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1.5">Dark</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {ANIM_BACKGROUNDS.filter((b) => !b.base.startsWith('#f') && !b.base.startsWith('#fff')).map((bg) => {
+                      const active = state.background.animBgId === bg.id
+                      return (
+                        <button
+                          key={bg.id}
+                          title={bg.name}
+                          onClick={() => state.setBackground({ ...state.background, type: 'animated', animBgId: bg.id })}
+                          className={cn(
+                            'aspect-video rounded-md border-2 transition-all hover:scale-105 overflow-hidden relative',
+                            active
+                              ? 'border-blue-400 shadow-[0_0_0_1px_rgba(96,165,250,0.5)]'
+                              : 'border-transparent hover:border-white/40',
+                          )}
+                          style={{ background: bg.previewCss }}
+                        >
+                          <span className="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-white/60 font-medium leading-none pb-0.5">{bg.name}</span>
+                          <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] text-white/30 uppercase tracking-widest mb-1.5">Light</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {ANIM_BACKGROUNDS.filter((b) => b.base.startsWith('#f') || b.base.startsWith('#fff')).map((bg) => {
+                      const active = state.background.animBgId === bg.id
+                      return (
+                        <button
+                          key={bg.id}
+                          title={bg.name}
+                          onClick={() => state.setBackground({ ...state.background, type: 'animated', animBgId: bg.id })}
+                          className={cn(
+                            'aspect-video rounded-md border-2 transition-all hover:scale-105 overflow-hidden relative',
+                            active
+                              ? 'border-blue-400 shadow-[0_0_0_1px_rgba(96,165,250,0.5)]'
+                              : 'border-transparent hover:border-white/40',
+                          )}
+                          style={{ background: bg.previewCss }}
+                        >
+                          <span className="absolute bottom-0.5 left-0 right-0 text-center text-[9px] text-black/40 font-medium leading-none pb-0.5">{bg.name}</span>
+                          <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-black/30 animate-pulse" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Section>
 
       {/* Shadows */}
