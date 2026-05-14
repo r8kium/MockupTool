@@ -124,6 +124,7 @@ export interface AnimTemplate {
   id: string
   name: string
   previewPath?: string
+  previewAnim?: string
   keyframes: AnimKeyframe[]
 }
 

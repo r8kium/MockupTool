@@ -106,26 +106,37 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
                   active ? 'border-blue-500' : 'border-white/10 hover:border-white/30'
                 )}
               >
-                {tpl.previewPath ? (
+                {/* Rotato templates: show original MP4 preview */}
+                {tpl.previewPath && (
                   <video
                     src={tpl.previewPath}
                     autoPlay loop muted playsInline
                     className="w-full h-full object-cover"
                   />
-                ) : (
-                  <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                    <span className="text-[11px] font-medium text-white/50">{tpl.name}</span>
+                )}
+
+                {/* New templates: device thumbnail with CSS animation */}
+                {!tpl.previewPath && tpl.previewAnim && (
+                  <div className="w-full h-full bg-[#181818] flex items-center justify-center overflow-hidden">
+                    <img
+                      src={device.thumbnailPath}
+                      alt={tpl.name}
+                      style={{ animation: tpl.previewAnim, willChange: 'transform' }}
+                      className="w-[52%] h-[82%] object-contain drop-shadow-lg"
+                    />
                   </div>
                 )}
+
+                {/* Label overlay — always visible on active, hover for others */}
                 <div className={cn(
-                  'absolute inset-0 flex items-end p-1.5 bg-gradient-to-t from-black/70 to-transparent transition-opacity',
-                  tpl.previewPath ? 'opacity-0 group-hover:opacity-100' : 'opacity-0',
-                  active && 'opacity-100'
+                  'absolute inset-0 flex items-end p-1.5 bg-gradient-to-t from-black/70 to-transparent transition-opacity pointer-events-none',
+                  active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                 )}>
                   <span className="text-[10px] font-medium text-white leading-tight">{tpl.name}</span>
                 </div>
+
                 {active && (
-                  <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-400" />
+                  <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-400 pointer-events-none" />
                 )}
               </button>
             )

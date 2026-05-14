@@ -73,6 +73,36 @@
   --ring: oklch(0.556 0 0);
 }
 
+/* ── Animation template thumbnail keyframes ─────────────────────────────── */
+
+@keyframes tpl-float {
+  0%, 100% { transform: translateY(-7px); }
+  50%       { transform: translateY(7px);  }
+}
+
+@keyframes tpl-tilt {
+  0%, 100% { transform: rotateZ(-14deg) scale(0.88); }
+  50%       { transform: rotateZ( 14deg) scale(0.88); }
+}
+
+@keyframes tpl-dolly-in {
+  0%, 100% { transform: scale(0.62); }
+  50%       { transform: scale(1.18); }
+}
+
+@keyframes tpl-dolly-out {
+  0%, 100% { transform: scale(1.18); }
+  50%       { transform: scale(0.62); }
+}
+
+@keyframes tpl-orbit {
+  0%   { transform: perspective(140px) rotateY(-35deg) scale(0.9); }
+  25%  { transform: perspective(140px) rotateY(  0deg) scale(1.0); }
+  50%  { transform: perspective(140px) rotateY( 35deg) scale(0.9); }
+  75%  { transform: perspective(140px) rotateY(  0deg) scale(1.0); }
+  100% { transform: perspective(140px) rotateY(-35deg) scale(0.9); }
+}
+
 @layer base {
   *,
   *::before,
