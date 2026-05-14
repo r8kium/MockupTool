@@ -85,8 +85,8 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
       side:      [22, 2, 10] as [number,number,number],
     },
     slots: [
-      { deviceId: 'iphone-12-pro', position: [-4.5, 0, 1.5], rotation: [0, 10, 0],  label: 'Front Phone'  },
-      { deviceId: 'iphone-12-pro', position: [ 4.5, 0,-2.5], rotation: [0,-10, 0],  label: 'Back Phone'   },
+      { deviceId: 'iphone-12-pro', position: [-4.5, 0, 1.5], rotation: [0, 190, 0],  label: 'Front Phone'  },
+      { deviceId: 'iphone-12-pro', position: [ 4.5, 0,-2.5], rotation: [0, 170, 0],  label: 'Back Phone'   },
     ],
   },
   {
@@ -99,9 +99,9 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
       side:      [24, 3, 12] as [number,number,number],
     },
     slots: [
-      { deviceId: 'iphone-12-pro', position: [-7,   0, -1],  rotation: [0, 20, 0],  label: 'Left Phone'   },
-      { deviceId: 'iphone-12-pro', position: [ 0,   0,  2],  rotation: [0,  0, 0],  label: 'Center Phone' },
-      { deviceId: 'iphone-12-pro', position: [ 7,   0, -1],  rotation: [0,-20, 0],  label: 'Right Phone'  },
+      { deviceId: 'iphone-12-pro', position: [-7,   0, -1],  rotation: [0, 200, 0],  label: 'Left Phone'   },
+      { deviceId: 'iphone-12-pro', position: [ 0,   0,  2],  rotation: [0, 180, 0],  label: 'Center Phone' },
+      { deviceId: 'iphone-12-pro', position: [ 7,   0, -1],  rotation: [0, 160, 0],  label: 'Right Phone'  },
     ],
   },
   {
@@ -128,8 +128,8 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
       side:      [24, 4, 11] as [number,number,number],
     },
     slots: [
-      { deviceId: 'macbook-16',     position: [0, 0, 0],      rotation: [0, 0, 0],   label: 'MacBook 16' },
-      { deviceId: 'iphone-12-pro',  position: [6, -0.3, 5],   rotation: [0, 15, -32], scaleMul: 0.85, label: 'iPhone' },
+      { deviceId: 'macbook-pro-m3-16', position: [0, 0, 0],      rotation: [0, 0, 0],   label: 'MacBook' },
+      { deviceId: 'iphone-12-pro',     position: [6, -0.3, 5],   rotation: [0, 195, -32], scaleMul: 0.85, label: 'iPhone' },
     ],
   },
   {
@@ -142,8 +142,8 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
       side:      [26, 4, 12] as [number,number,number],
     },
     slots: [
-      { deviceId: 'macbook-16',     position: [-3, 0, 0],    rotation: [0, 5, 0],    label: 'MacBook 16' },
-      { deviceId: 'iphone-12-pro',  position: [ 9, -1, 3],   rotation: [-90, 0, 0],  scaleMul: 0.9, label: 'iPhone (Flat)' },
+      { deviceId: 'macbook-pro-m3-16', position: [-3, 0, 0],    rotation: [0, 5, 0],     label: 'MacBook' },
+      { deviceId: 'iphone-12-pro',     position: [ 9, -1, 3],   rotation: [-90, 180, 0], scaleMul: 0.9, label: 'iPhone (Flat)' },
     ],
   },
   {
@@ -156,8 +156,8 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
       side:      [26, 4, 12] as [number,number,number],
     },
     slots: [
-      { deviceId: 'macbook-16',     position: [-3, 0, 0],    rotation: [0, 5, 0],   label: 'MacBook 16' },
-      { deviceId: 'iphone-12-pro',  position: [ 8, 2, 3],    rotation: [-25, 11, 9], scaleMul: 0.9, label: 'iPhone (Floating)' },
+      { deviceId: 'macbook-pro-m3-16', position: [-3, 0, 0],    rotation: [0, 5, 0],     label: 'MacBook' },
+      { deviceId: 'iphone-12-pro',     position: [ 8, 2, 3],    rotation: [-25, 191, 9], scaleMul: 0.9, label: 'iPhone (Floating)' },
     ],
   },
   {
@@ -170,8 +170,8 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
       side:      [26, 4, 12] as [number,number,number],
     },
     slots: [
-      { deviceId: 'macbook-16',     position: [-3, 0, 0],    rotation: [0, 5, 0],     label: 'MacBook 16' },
-      { deviceId: 'iphone-12-pro',  position: [ 9, 0, 4],    rotation: [0, 90, 0],    scaleMul: 0.9, label: 'iPhone (Side)' },
+      { deviceId: 'macbook-pro-m3-16', position: [-3, 0, 0],    rotation: [0, 5, 0],   label: 'MacBook' },
+      { deviceId: 'iphone-12-pro',     position: [ 9, 0, 4],    rotation: [0, 270, 0], scaleMul: 0.9, label: 'iPhone (Side)' },
     ],
   },
   {
@@ -184,8 +184,8 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
       side:      [26, 4, 12] as [number,number,number],
     },
     slots: [
-      { deviceId: 'macbook-16',     position: [-3, 0, 0],    rotation: [0, 5, 0],  label: 'MacBook 16' },
-      { deviceId: 'iphone-12-pro',  position: [ 9, 0, 2],    rotation: [0, 0, 0],  scaleMul: 0.9, label: 'iPhone (Standing)' },
+      { deviceId: 'macbook-pro-m3-16', position: [-3, 0, 0],    rotation: [0, 5, 0],   label: 'MacBook' },
+      { deviceId: 'iphone-12-pro',     position: [ 9, 0, 2],    rotation: [0, 180, 0], scaleMul: 0.9, label: 'iPhone (Standing)' },
     ],
   },
   {
@@ -198,8 +198,8 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
       side:      [26, 4, 12] as [number,number,number],
     },
     slots: [
-      { deviceId: 'macbook-16',     position: [-3, 0, 0],    rotation: [0, 5, 0],       label: 'MacBook 16' },
-      { deviceId: 'iphone-12-pro',  position: [ 9, -0.5, 4], rotation: [-45, 15, 0],    scaleMul: 0.9, label: 'iPhone (45°)' },
+      { deviceId: 'macbook-pro-m3-16', position: [-3, 0, 0],    rotation: [0, 5, 0],       label: 'MacBook' },
+      { deviceId: 'iphone-12-pro',     position: [ 9, -0.5, 4], rotation: [-45, 195, 0],   scaleMul: 0.9, label: 'iPhone (45°)' },
     ],
   },
   {
