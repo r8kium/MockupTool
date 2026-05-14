@@ -20,6 +20,7 @@ import { readFileAsDataUrl, evalBezier } from '@/lib/utils'
 import { animClock } from '@/lib/animClock'
 import { getPresetCss } from '@/lib/backgrounds'
 import { AnimatedBackground } from '@/components/AnimatedBackground'
+import { markLoaded } from '@/lib/modelCache'
 
 // ── Material constants (module-level, shared across all device instances) ───────
 const M = {
@@ -135,12 +136,64 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { error: Er
 
 // ── Loading overlay ───────────────────────────────────────────────────────────────
 function LoadingOverlay() {
-  const { active, progress } = useProgress()
+  const { active, progress, item } = useProgress()
   if (!active) return null
+
+  const SIZE = 72
+  const STROKE = 3.5
+  const r = (SIZE - STROKE) / 2
+  const circ = 2 * Math.PI * r
+  const filled = (progress / 100) * circ
+
+  // Extract a friendly model name from the URL
+  const modelName = item
+    ? item.split('/').pop()?.replace('.gltf', '').replace('.glb', '').replace(/-/g, ' ') ?? ''
+    : ''
+
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/30 backdrop-blur-sm rounded-inherit">
-      <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-      <span className="text-white/80 text-xs tabular-nums">{Math.round(progress)}%</span>
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/50 backdrop-blur-md">
+
+      {/* Ring */}
+      <div className="relative" style={{ width: SIZE, height: SIZE }}>
+        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
+          <defs>
+            <filter id="ring-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+          {/* Track */}
+          <circle cx={SIZE / 2} cy={SIZE / 2} r={r}
+            fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} />
+          {/* Progress arc */}
+          <circle cx={SIZE / 2} cy={SIZE / 2} r={r}
+            fill="none"
+            stroke="rgba(139,92,246,0.9)"
+            strokeWidth={STROKE}
+            strokeLinecap="round"
+            strokeDasharray={`${filled} ${circ}`}
+            filter="url(#ring-glow)"
+            style={{ transition: 'stroke-dasharray 0.25s ease' }}
+          />
+        </svg>
+        {/* Percentage in center */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-white/90 text-sm font-semibold tabular-nums">
+            {Math.round(progress)}%
+          </span>
+        </div>
+      </div>
+
+      {/* Labels */}
+      <div className="text-center space-y-1">
+        <p className="text-white/90 text-xs font-medium tracking-wide">Downloading model</p>
+        {modelName && (
+          <p className="text-white/40 text-[10px] capitalize max-w-[160px] truncate">
+            {modelName}
+          </p>
+        )}
+      </div>
+
     </div>
   )
 }
@@ -158,6 +211,9 @@ interface DeviceModelProps {
 function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale, onScreenClick }: DeviceModelProps) {
   const { scene } = useGLTF(gltfPath)
   const cloned  = useMemo(() => scene.clone(true), [scene])
+
+  // Mark this model loaded in the cache once it renders
+  useEffect(() => { markLoaded(gltfPath) }, [gltfPath])
   const center  = useMemo(() => computeCenter(cloned), [cloned])
 
   const screenshotTex = useMemo(() => {
