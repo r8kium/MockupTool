@@ -10,10 +10,11 @@ import {
   type MutableRefObject,
 } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { useGLTF, ContactShadows, OrbitControls } from '@react-three/drei'
+import { useGLTF, ContactShadows, OrbitControls, Environment } from '@react-three/drei'
 import * as THREE from 'three'
 import type { AnimTemplate, EditorState, SceneTemplate } from '@/types'
 import type { ShadowPreset } from '@/store/useEditorStore'
+import { ENVIRONMENT_PRESET_MAP, type DreiPreset } from '@/lib/environments'
 import { DEVICE_MODELS } from '@/lib/frames'
 import { readFileAsDataUrl, evalBezier } from '@/lib/utils'
 import { animClock } from '@/lib/animClock'
@@ -237,6 +238,28 @@ function StudioLighting({ shadow }: { shadow: boolean }) {
   )
 }
 
+// ── HDRI environment ──────────────────────────────────────────────────────────────
+function SceneEnvironment({ environmentId, shadow }: { environmentId: string; shadow: boolean }) {
+  const env = ENVIRONMENT_PRESET_MAP[environmentId as DreiPreset]
+  if (!env) return null
+  return (
+    <>
+      <Environment preset={env.id} background={false} environmentIntensity={env.intensity} />
+      {/* One directional light kept solely for shadow casting; HDRI handles all shading */}
+      <ambientLight intensity={0.15} />
+      {shadow && (
+        <directionalLight
+          position={[5, 10, 8]} intensity={0.5} castShadow
+          shadow-mapSize-width={2048} shadow-mapSize-height={2048}
+          shadow-camera-near={0.1} shadow-camera-far={120}
+          shadow-camera-left={-22} shadow-camera-right={22}
+          shadow-camera-top={22} shadow-camera-bottom={-22}
+        />
+      )}
+    </>
+  )
+}
+
 // ── Scene background ──────────────────────────────────────────────────────────────
 function SceneBg({ background }: { background: EditorState['background'] }) {
   const { scene } = useThree()
@@ -338,7 +361,7 @@ export interface ThreeCanvasRef {
 }
 
 interface ThreeCanvasProps {
-  state: EditorState & { shadowPreset?: ShadowPreset }
+  state: EditorState & { shadowPreset?: ShadowPreset; environmentId?: string | null }
   canvasRef?: MutableRefObject<ThreeCanvasRef | null>
   onScreenshotUpload?: (dataUrl: string) => void
   sceneTemplate?: SceneTemplate
@@ -408,7 +431,10 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
               : <CameraController angle={state.cameraAngle} presets={camPresets} onMount={() => { animClock.templateId = null }} />
             }
             <Exporter onReady={(fn, ctx) => { exportFnRef.current = fn; threeCtxRef.current = ctx }} />
-            <StudioLighting shadow={!!shadowCfg} />
+            {state.environmentId
+              ? <SceneEnvironment environmentId={state.environmentId} shadow={!!shadowCfg} />
+              : <StudioLighting shadow={!!shadowCfg} />
+            }
 
             <Suspense fallback={null}>
               {sceneTemplate ? (

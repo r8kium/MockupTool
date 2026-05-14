@@ -8,6 +8,7 @@ import type { BackgroundConfig, BackgroundType } from '@/types'
 import { cn, readFileAsDataUrl } from '@/lib/utils'
 import { PRESET_BACKGROUNDS } from '@/lib/backgrounds'
 import { ANIM_BACKGROUNDS } from '@/lib/animBackgrounds'
+import { ENVIRONMENT_PRESETS } from '@/lib/environments'
 
 const APPLE_COLORS = [
   { hex: '#8D8D8D', label: 'Titanium' },
@@ -106,6 +107,57 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
       {/* Animation */}
       <Section title="Animation" defaultOpen={false}>
         <AnimSection screenshot={state.screenshot} />
+      </Section>
+
+      {/* Environment */}
+      <Section title="Environment" defaultOpen={false}>
+        <div className="grid grid-cols-2 gap-1.5">
+          {/* None */}
+          <button
+            onClick={() => state.setEnvironment(null)}
+            className={cn(
+              'relative rounded-lg border-2 transition-all h-10 flex items-center justify-center text-xs font-medium overflow-hidden',
+              state.environmentId === null
+                ? 'border-blue-500 text-blue-300 bg-blue-500/10'
+                : 'border-white/10 text-white/40 hover:border-white/30 hover:text-white/60'
+            )}
+          >
+            None
+          </button>
+
+          {ENVIRONMENT_PRESETS.map((env) => {
+            const active = state.environmentId === env.id
+            return (
+              <button
+                key={env.id}
+                onClick={() => state.setEnvironment(env.id)}
+                title={env.name}
+                className={cn(
+                  'relative rounded-lg border-2 transition-all h-10 overflow-hidden group',
+                  active ? 'border-blue-500' : 'border-white/10 hover:border-white/30'
+                )}
+              >
+                {/* Color swatch background */}
+                <div className="absolute inset-0" style={{ background: env.swatch }} />
+                {/* Label overlay */}
+                <div className={cn(
+                  'absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity',
+                  active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                )}>
+                  <span className="text-[10px] font-semibold text-white drop-shadow">{env.name}</span>
+                </div>
+                {active && (
+                  <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-400" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+        {state.environmentId && (
+          <p className="text-[10px] text-white/30 mt-1">
+            IBL reflections active — flat lights replaced by environment
+          </p>
+        )}
       </Section>
 
       {/* Device */}
