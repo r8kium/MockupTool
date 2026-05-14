@@ -1,0 +1,8 @@
+# Models are 311 MB and exceed Vercel's free-tier 100 MB limit.
+# Host them on Cloudflare R2 (or any CDN) and set VITE_ASSETS_BASE_URL
+# in your Vercel project environment variables.
+#
+# If you are on Vercel Pro (1 GB limit) you can remove these two lines
+# and deploy with all models included.
+iphone-mockup-tool/public/models
+iphone-mockup-tool/public/mockups

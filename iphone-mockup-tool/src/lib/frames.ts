@@ -833,11 +833,18 @@ const DEVICES: DeviceModel[] = [
   },
 ]
 
+const ASSETS_BASE = (import.meta.env.VITE_ASSETS_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+
+function rebase(d: DeviceModel): DeviceModel {
+  if (!ASSETS_BASE) return d
+  return { ...d, gltfPath: `${ASSETS_BASE}${d.gltfPath}`, thumbnailPath: `${ASSETS_BASE}${d.thumbnailPath}` }
+}
+
 export const DEVICE_MODELS: Record<DeviceId, DeviceModel> = Object.fromEntries(
-  DEVICES.map((d) => [d.id, d])
+  DEVICES.map((d) => [d.id, rebase(d)])
 ) as Record<DeviceId, DeviceModel>
 
-export const DEVICE_LIST: DeviceModel[] = DEVICES
+export const DEVICE_LIST: DeviceModel[] = DEVICES.map(rebase)
 
 export const DEVICE_CATEGORIES: { id: DeviceCategory | 'all'; label: string }[] = [
   { id: 'all',     label: 'All' },
