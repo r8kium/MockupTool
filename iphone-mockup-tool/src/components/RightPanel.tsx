@@ -4,6 +4,7 @@ import { useDropzone } from 'react-dropzone'
 import { useEditorStore, type ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
 import { ANIM_TEMPLATES } from '@/lib/animTemplates'
+import { AnimThumbnail } from '@/components/AnimThumbnail'
 import type { BackgroundConfig, BackgroundType } from '@/types'
 import { cn, readFileAsDataUrl } from '@/lib/utils'
 
@@ -106,28 +107,9 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
                   active ? 'border-blue-500' : 'border-white/10 hover:border-white/30'
                 )}
               >
-                {/* Rotato templates: show original MP4 preview */}
-                {tpl.previewPath && (
-                  <video
-                    src={tpl.previewPath}
-                    autoPlay loop muted playsInline
-                    className="w-full h-full object-cover"
-                  />
-                )}
+                <AnimThumbnail templateId={tpl.id} screenshot={state.screenshot} />
 
-                {/* New templates: device thumbnail with CSS animation */}
-                {!tpl.previewPath && tpl.previewAnim && (
-                  <div className="w-full h-full bg-[#181818] flex items-center justify-center overflow-hidden">
-                    <img
-                      src={device.thumbnailPath}
-                      alt={tpl.name}
-                      style={{ animation: tpl.previewAnim, willChange: 'transform' }}
-                      className="w-[52%] h-[82%] object-contain drop-shadow-lg"
-                    />
-                  </div>
-                )}
-
-                {/* Label overlay — always visible on active, hover for others */}
+                {/* Label overlay */}
                 <div className={cn(
                   'absolute inset-0 flex items-end p-1.5 bg-gradient-to-t from-black/70 to-transparent transition-opacity pointer-events-none',
                   active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'

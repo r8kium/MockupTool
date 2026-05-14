@@ -6,14 +6,13 @@ import type { AnimTemplate } from '@/types'
 // 11 extracted from Rotato .keyframes files (MP4 previews from app bundle)
 //
 // duration = seconds to transition FROM this keyframe TO the next (loops).
-// previewAnim = CSS animation name for the live thumbnail (new templates only).
+
 
 export const ANIM_TEMPLATES: AnimTemplate[] = [
   // ── Hand-crafted: gentle / ambient ───────────────────────────────────────
   {
     id: 'float',
     name: 'Float',
-    previewAnim: 'tpl-float 2.5s ease-in-out infinite',
     keyframes: [
       { cam: [0, -0.5, 18], roll:  0, duration: 2.5, easing: [0.42, 0.0, 0.58, 1.0] },
       { cam: [0,  0.5, 18], roll:  0, duration: 2.5, easing: [0.42, 0.0, 0.58, 1.0] },
@@ -22,7 +21,6 @@ export const ANIM_TEMPLATES: AnimTemplate[] = [
   {
     id: 'tilt',
     name: 'Tilt',
-    previewAnim: 'tpl-tilt 3s ease-in-out infinite',
     keyframes: [
       { cam: [0, 1, 18], roll: -14, duration: 3.0, easing: [0.42, 0.0, 0.58, 1.0] },
       { cam: [0, 1, 18], roll:  14, duration: 3.0, easing: [0.42, 0.0, 0.58, 1.0] },
@@ -33,7 +31,6 @@ export const ANIM_TEMPLATES: AnimTemplate[] = [
   {
     id: 'dolly-in',
     name: 'Dolly In',
-    previewAnim: 'tpl-dolly-in 3s ease-in-out infinite',
     keyframes: [
       { cam: [0, 2, 26], roll: 0, duration: 3.0, easing: [0.25, 0.10, 0.25, 1.0] },
       { cam: [0, 1, 11], roll: 0, duration: 3.0, easing: [0.25, 0.10, 0.25, 1.0] },
@@ -42,7 +39,6 @@ export const ANIM_TEMPLATES: AnimTemplate[] = [
   {
     id: 'dolly-out',
     name: 'Dolly Out',
-    previewAnim: 'tpl-dolly-out 3s ease-in-out infinite',
     keyframes: [
       { cam: [0, 1, 11], roll: 0, duration: 3.0, easing: [0.25, 0.10, 0.25, 1.0] },
       { cam: [0, 2, 26], roll: 0, duration: 3.0, easing: [0.25, 0.10, 0.25, 1.0] },
@@ -51,7 +47,6 @@ export const ANIM_TEMPLATES: AnimTemplate[] = [
   {
     id: 'orbit',
     name: 'Orbit',
-    previewAnim: 'tpl-orbit 4s ease-in-out infinite',
     keyframes: [
       { cam: [  0, 3,  18], roll: 0, duration: 4.0, easing: [0.25, 0.10, 0.25, 1.0] },
       { cam: [ 18, 3,   0], roll: 0, duration: 4.0, easing: [0.25, 0.10, 0.25, 1.0] },

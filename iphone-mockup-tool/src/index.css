@@ -73,7 +73,16 @@
   --ring: oklch(0.556 0 0);
 }
 
-/* ── Animation template thumbnail keyframes ─────────────────────────────── */
+/* ── Animation template thumbnail keyframes ─────────────────────────────────
+   perspective(300px) is set on the container — all transforms below are in
+   that 3D space. Camera-to-phone transform mapping:
+     camera elevated (y>0, looking down)  → rotateX(positive) on phone
+     camera roll clockwise                → rotateZ matching value on phone
+     camera x-pan right                  → phone translateX(negative) [inverse]
+     camera azimuth rotates right         → rotateY(positive) on phone
+─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Hand-crafted ───────────────────────────────────────────────────────── */
 
 @keyframes tpl-float {
   0%, 100% { transform: translateY(-7px); }
@@ -81,26 +90,95 @@
 }
 
 @keyframes tpl-tilt {
-  0%, 100% { transform: rotateZ(-14deg) scale(0.88); }
-  50%       { transform: rotateZ( 14deg) scale(0.88); }
+  0%, 100% { transform: rotateZ(-14deg) translateY(-2px); }
+  50%       { transform: rotateZ( 14deg) translateY( 2px); }
 }
 
 @keyframes tpl-dolly-in {
-  0%, 100% { transform: scale(0.62); }
-  50%       { transform: scale(1.18); }
+  0%, 100% { transform: scale(0.58); }
+  50%       { transform: scale(1.22); }
 }
 
 @keyframes tpl-dolly-out {
-  0%, 100% { transform: scale(1.18); }
-  50%       { transform: scale(0.62); }
+  0%, 100% { transform: scale(1.22); }
+  50%       { transform: scale(0.58); }
 }
 
 @keyframes tpl-orbit {
-  0%   { transform: perspective(140px) rotateY(-35deg) scale(0.9); }
-  25%  { transform: perspective(140px) rotateY(  0deg) scale(1.0); }
-  50%  { transform: perspective(140px) rotateY( 35deg) scale(0.9); }
-  75%  { transform: perspective(140px) rotateY(  0deg) scale(1.0); }
-  100% { transform: perspective(140px) rotateY(-35deg) scale(0.9); }
+  0%   { transform: rotateY(-35deg) scale(0.88); }
+  25%  { transform: rotateY(  0deg) scale(1.00); }
+  50%  { transform: rotateY( 35deg) scale(0.88); }
+  75%  { transform: rotateY(  0deg) scale(1.00); }
+  100% { transform: rotateY(-35deg) scale(0.88); }
+}
+
+/* ── Rotato originals ───────────────────────────────────────────────────── */
+
+/* Camera elevated, rolls from -32° → +19° with slight x-pan (4.5s loop) */
+@keyframes tpl-top-turn {
+  0%   { transform: rotateX(12deg) rotateZ( 32deg) translateX(-4px); }
+  67%  { transform: rotateX(12deg) rotateZ(-19deg) translateX( 3px); }
+  100% { transform: rotateX(12deg) rotateZ( 32deg) translateX(-4px); }
+}
+
+/* Camera from below, roll 19° → -16° */
+@keyframes tpl-bottom-turn {
+  0%, 100% { transform: rotateX(-16deg) rotateZ(-19deg) translateX(-5px); }
+  50%       { transform: rotateX(-16deg) rotateZ( 16deg) translateX( 4px); }
+}
+
+/* Camera sweeps from BEHIND device (z negative) to front-right */
+@keyframes tpl-flip-in {
+  0%, 100% { transform: rotateY(145deg) scale(0.9); }
+  50%       { transform: rotateY(-28deg) scale(0.95); }
+}
+
+/* Camera sweeps from back-right-top to front-left-bottom */
+@keyframes tpl-flip-up {
+  0%, 100% { transform: rotateX(-14deg) rotateY(-112deg) scale(0.88); }
+  50%       { transform: rotateX( 10deg) rotateY(  45deg) scale(0.95); }
+}
+
+/* Camera at 24° elevation pans hard left → right; phone shifts inversely */
+@keyframes tpl-pan-across {
+  0%, 100% { transform: rotateX(13deg) translateX( 32px); }
+  50%       { transform: rotateX(13deg) translateX(-32px); }
+}
+
+/* Camera at 53° elevation with -41° roll, bobs ±1 unit */
+@keyframes tpl-hover {
+  0%, 100% { transform: rotateX(38deg) rotateZ(-41deg) translateY(-5px); }
+  50%       { transform: rotateX(38deg) rotateZ(-41deg) translateY( 5px); }
+}
+
+/* Camera from angled-close to straight front */
+@keyframes tpl-slide-in {
+  0%, 100% { transform: rotateY(20deg) rotateX(-8deg) scale(1.3) translateX(-7px); }
+  50%       { transform: rotateY( 0deg) rotateX( 0deg) scale(1.0) translateX( 0px); }
+}
+
+/* Camera from low-dangling (roll 25°) to slightly elevated (roll 12°) */
+@keyframes tpl-dangle {
+  0%, 100% { transform: rotateX(-12deg) rotateZ( 25deg) translateY( 6px); }
+  50%       { transform: rotateX(  7deg) rotateZ( 12deg) translateY(-4px); }
+}
+
+/* Camera near-left → far-right with 14° roll */
+@keyframes tpl-hoist-down {
+  0%, 100% { transform: rotateX( 9deg) rotateY( 12deg) translateY( 5px); }
+  50%       { transform: rotateX(-4deg) rotateY(-42deg) rotateZ(14deg) translateX(-18px); }
+}
+
+/* Camera from left-elevated to right-lower (edge-on) */
+@keyframes tpl-edging {
+  0%, 100% { transform: rotateX(-12deg) rotateY( 28deg) rotateZ(-4deg); }
+  50%       { transform: rotateX( 10deg) rotateY( -8deg) rotateZ( 5deg); }
+}
+
+/* Camera close from top, pulls back; roll -5° → 12° */
+@keyframes tpl-slide-in-top {
+  0%, 100% { transform: rotateX(-34deg) scale(1.4) rotateZ( 5deg); }
+  50%       { transform: rotateX(-34deg) scale(0.72) rotateZ(-12deg); }
 }
 
 @layer base {
