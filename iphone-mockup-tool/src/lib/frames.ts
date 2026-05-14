@@ -836,7 +836,7 @@ const ASSETS_BASE = (import.meta.env.VITE_ASSETS_BASE_URL as string | undefined)
 
 function rebase(d: DeviceModel): DeviceModel {
   if (!ASSETS_BASE) return d
-  return { ...d, gltfPath: `${ASSETS_BASE}${d.gltfPath}`, thumbnailPath: `${ASSETS_BASE}${d.thumbnailPath}` }
+  return { ...d, gltfPath: `${ASSETS_BASE}${d.gltfPath}` }
 }
 
 export const DEVICE_MODELS: Record<DeviceId, DeviceModel> = Object.fromEntries(

@@ -10,7 +10,7 @@ import {
   type MutableRefObject,
 } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { useGLTF, ContactShadows, OrbitControls, Environment } from '@react-three/drei'
+import { useGLTF, ContactShadows, OrbitControls, Environment, useProgress } from '@react-three/drei'
 import * as THREE from 'three'
 import type { AnimTemplate, EditorState, SceneTemplate } from '@/types'
 import type { ShadowPreset } from '@/store/useEditorStore'
@@ -131,6 +131,18 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode }, { error: Er
     )
     return this.props.children
   }
+}
+
+// ── Loading overlay ───────────────────────────────────────────────────────────────
+function LoadingOverlay() {
+  const { active, progress } = useProgress()
+  if (!active) return null
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/30 backdrop-blur-sm rounded-inherit">
+      <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      <span className="text-white/80 text-xs tabular-nums">{Math.round(progress)}%</span>
+    </div>
+  )
 }
 
 // ── Device model ──────────────────────────────────────────────────────────────────
@@ -410,6 +422,7 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
     return (
       <CanvasErrorBoundary>
         <div className="relative w-full h-full" style={bgStyle}>
+          <LoadingOverlay />
           {state.background.type === 'animated' && state.background.animBgId && (
             <AnimatedBackground id={state.background.animBgId} />
           )}
