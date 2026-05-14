@@ -4,7 +4,7 @@ import { useDropzone } from 'react-dropzone'
 import { useEditorStore, type ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
 import type { BackgroundConfig, BackgroundType } from '@/types'
-import { cn } from '@/lib/utils'
+import { cn, readFileAsDataUrl } from '@/lib/utils'
 
 const SHADOW_PRESETS: { id: ShadowPreset; label: string }[] = [
   { id: 'none',  label: 'None' },
@@ -42,11 +42,9 @@ function Section({ title, children, defaultOpen = true }: {
 
 function BgImageDropzone() {
   const { setBackground, background } = useEditorStore()
-  const onDrop = useCallback((files: File[]) => {
+  const onDrop = useCallback(async (files: File[]) => {
     const file = files[0]; if (!file) return
-    const reader = new FileReader()
-    reader.onload = (e) => setBackground({ type: 'image', imageDataUrl: e.target?.result as string })
-    reader.readAsDataURL(file)
+    setBackground({ type: 'image', imageDataUrl: await readFileAsDataUrl(file) })
   }, [setBackground])
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop, accept: { 'image/png': [], 'image/jpeg': [], 'image/webp': [] }, maxFiles: 1

@@ -5,6 +5,7 @@ import type { ThreeCanvasRef } from '@/components/ThreeCanvas'
 import { RightPanel } from '@/components/RightPanel'
 import { useEditorStore } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
+import { readFileAsDataUrl } from '@/lib/utils'
 
 interface Props {
   onBack: () => void
@@ -12,20 +13,14 @@ interface Props {
 
 export function Editor({ onBack }: Props) {
   const canvasRef = useRef<ThreeCanvasRef | null>(null)
-  const state = useEditorStore()
+  const uploadRef = useRef<HTMLInputElement>(null)
+  const state  = useEditorStore()
   const device = DEVICE_MODELS[state.deviceId]
 
-  const handleUpload = useCallback(() => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/png,image/jpeg,image/webp'
-    input.onchange = () => {
-      const file = input.files?.[0]; if (!file) return
-      const reader = new FileReader()
-      reader.onload = (e) => state.setScreenshot(e.target?.result as string)
-      reader.readAsDataURL(file)
-    }
-    input.click()
+  const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) state.setScreenshot(await readFileAsDataUrl(file))
+    e.target.value = ''
   }, [state])
 
   const handleExport = useCallback(() => {
@@ -51,7 +46,8 @@ export function Editor({ onBack }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={handleUpload}
+          <input ref={uploadRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+          <button onClick={() => uploadRef.current?.click()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white hover:bg-white/8 border border-white/10 transition-colors">
             <Upload className="w-3.5 h-3.5" />
             Upload
