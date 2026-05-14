@@ -1,6 +1,5 @@
 import { ANIM_BG_MAP } from '@/lib/animBackgrounds'
 
-const ANIM_CLASS = ['bg-blob-1', 'bg-blob-2', 'bg-blob-3', 'bg-blob-4'] as const
 
 interface Props { id: string }
 

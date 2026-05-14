@@ -16,7 +16,6 @@ const WATCH_CAM = {
   side:      [14, 2,  6] as [number,number,number],
 }
 
-type RawDevice = Omit<DeviceModel, 'gltfPath' | 'thumbnailPath'> & { id: DeviceId }
 
 const DEVICES: DeviceModel[] = [
   // ── iPhones ──────────────────────────────────────────────────────────────────
