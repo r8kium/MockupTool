@@ -130,9 +130,12 @@ export function DeviceBrowser({ onSelect, onSelectScene }: Props) {
                     className="group flex flex-col rounded-xl overflow-hidden border border-white/8 bg-white/4 hover:border-white/20 hover:bg-white/8 transition-all text-left"
                   >
                     <div className="aspect-[4/3] bg-[#2a2a2a] flex items-center justify-center overflow-hidden">
-                      <div className="flex items-center justify-center w-full h-full">
-                        <Layers className="w-8 h-8 text-white/20" />
-                      </div>
+                      <img
+                        src={scene.thumbnailPath}
+                        alt={scene.name}
+                        className="w-full h-full object-contain p-3"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="flex items-center justify-center w-full h-full"><svg class="w-8 h-8 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M2 12h20"/><path d="M12 2v20"/></svg></div>' }}
+                      />
                     </div>
                     <div className="px-3 py-2.5">
                       <p className="text-xs font-medium text-white/70">{scene.name}</p>
