@@ -1,4 +1,5 @@
 {
+  "installCommand": "cd iphone-mockup-tool && npm install",
   "buildCommand": "cd iphone-mockup-tool && npm run build",
   "outputDirectory": "iphone-mockup-tool/dist",
   "rewrites": [
