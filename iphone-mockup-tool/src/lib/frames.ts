@@ -1,9 +1,9 @@
 import type { DeviceModel, DeviceId, DeviceCategory } from '@/types'
 
 const MAC_CAM = {
-  front:     [0,  1, 18] as [number,number,number],
-  isometric: [10, 5, 15] as [number,number,number],
-  side:      [20, 4,  8] as [number,number,number],
+  front:     [0,  3, 16] as [number,number,number],
+  isometric: [9,  6, 13] as [number,number,number],
+  side:      [18, 3,  8] as [number,number,number],
 }
 const TABLET_CAM = {
   front:     [0, 0, 22] as [number,number,number],
@@ -257,6 +257,64 @@ const DEVICES: DeviceModel[] = [
     ],
   },
   {
+    id: 'iphone-12-pro',
+    name: 'iPhone 12 Pro',
+    category: 'iphone',
+    gltfPath: '/models/iphone-12-pro.gltf',
+    thumbnailPath: '/thumbnails/iphone-12-pro.png',
+    screenAspect: 19.5 / 9,
+    modelScale: 0.6285,
+    colors: [
+      { id: 'graphite', label: 'Graphite', hex: '#3a3a3c' },
+      { id: 'silver',   label: 'Silver',   hex: '#e8e4de' },
+      { id: 'gold',     label: 'Gold',     hex: '#f5e6c8' },
+      { id: 'blue',     label: 'Pacific Blue', hex: '#2d5a8e' },
+    ],
+  },
+  {
+    id: 'iphone-11-pro',
+    name: 'iPhone 11 Pro',
+    category: 'iphone',
+    gltfPath: '/models/iphone-11-pro.gltf',
+    thumbnailPath: '/thumbnails/iphone-11-pro.png',
+    screenAspect: 19.5 / 9,
+    modelScale: 0.6945,
+    colors: [
+      { id: 'space',    label: 'Space Gray',    hex: '#3a3a3c' },
+      { id: 'silver',   label: 'Silver',         hex: '#e8e4de' },
+      { id: 'gold',     label: 'Gold',           hex: '#f5e6c8' },
+      { id: 'midnight', label: 'Midnight Green', hex: '#4a5a4a' },
+    ],
+  },
+  {
+    id: 'iphone-8',
+    name: 'iPhone 8',
+    category: 'iphone',
+    gltfPath: '/models/iphone-8.gltf',
+    thumbnailPath: '/thumbnails/iphone-8.png',
+    screenAspect: 16 / 9,
+    modelScale: 0.7223,
+    colors: [
+      { id: 'space',  label: 'Space Gray', hex: '#3a3a3c' },
+      { id: 'silver', label: 'Silver',     hex: '#e8e4de' },
+      { id: 'gold',   label: 'Gold',       hex: '#f5e6c8' },
+    ],
+  },
+  {
+    id: '9-pro',
+    name: '9 Pro',
+    category: 'iphone',
+    gltfPath: '/models/9-pro.gltf',
+    thumbnailPath: '/thumbnails/9-pro.png',
+    screenAspect: 19.5 / 9,
+    modelScale: 0.6058,
+    colors: [
+      { id: 'black',   label: 'Black',   hex: '#1c1c1e' },
+      { id: 'silver',  label: 'Silver',  hex: '#e8e4de' },
+      { id: 'gold',    label: 'Gold',    hex: '#f5e6c8' },
+    ],
+  },
+  {
     id: 'pro-max-notchless',
     name: 'Pro Max Notchless',
     category: 'iphone',
@@ -272,6 +330,34 @@ const DEVICES: DeviceModel[] = [
   },
 
   // ── iPads ─────────────────────────────────────────────────────────────────────
+  {
+    id: 'ipad-pro-11',
+    name: 'iPad Pro 11"',
+    category: 'ipad',
+    gltfPath: '/models/ipad-pro-11.gltf',
+    thumbnailPath: '/thumbnails/ipad-pro-11.png',
+    screenAspect: 4 / 3,
+    modelScale: 0.2973,
+    camPresets: TABLET_CAM,
+    colors: [
+      { id: 'space',  label: 'Space Gray', hex: '#2c2c2e' },
+      { id: 'silver', label: 'Silver',     hex: '#e8e4de' },
+    ],
+  },
+  {
+    id: 'ipad-m1-2021',
+    name: 'iPad M1 (2021)',
+    category: 'ipad',
+    gltfPath: '/models/ipad-m1-2021.gltf',
+    thumbnailPath: '/thumbnails/ipad-m1-2021.png',
+    screenAspect: 4 / 3,
+    modelScale: 0.3557,
+    camPresets: TABLET_CAM,
+    colors: [
+      { id: 'space',  label: 'Space Gray', hex: '#2c2c2e' },
+      { id: 'silver', label: 'Silver',     hex: '#e8e4de' },
+    ],
+  },
   {
     id: 'ipad-mini-6',
     name: 'iPad mini 6',
@@ -339,7 +425,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-pro-m3-16.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m3-16.png',
     screenAspect: 16 / 10,
-    modelScale: 0.2825,
+    modelScale: 0.2811,
     camPresets: MAC_CAM,
     colors: [
       { id: 'space',  label: 'Space Black', hex: '#1c1c1e' },
@@ -353,7 +439,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-pro-m3-14.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m3-14.png',
     screenAspect: 16 / 10,
-    modelScale: 0.2456,
+    modelScale: 0.3199,
     camPresets: MAC_CAM,
     colors: [
       { id: 'space',  label: 'Space Black', hex: '#1c1c1e' },
@@ -367,7 +453,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-pro-m1-16.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m1-16.png',
     screenAspect: 16 / 10,
-    modelScale: 33.7,
+    modelScale: 0.2811,
     camPresets: MAC_CAM,
     colors: [
       { id: 'space',  label: 'Space Gray', hex: '#3a3a3c' },
@@ -381,7 +467,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-air-m2-15.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m3-16.png',
     screenAspect: 16 / 10,
-    modelScale: 0.35,
+    modelScale: 0.2938,
     camPresets: MAC_CAM,
     colors: [
       { id: 'starlight', label: 'Starlight', hex: '#f5f0e8' },
@@ -397,7 +483,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-air-m2-13.gltf',
     thumbnailPath: '/thumbnails/macbook-pro-m3-14.png',
     screenAspect: 16 / 10,
-    modelScale: 46.04,
+    modelScale: 0.3288,
     camPresets: MAC_CAM,
     colors: [
       { id: 'starlight', label: 'Starlight', hex: '#f5f0e8' },
@@ -413,7 +499,7 @@ const DEVICES: DeviceModel[] = [
     gltfPath: '/models/macbook-air-m1.gltf',
     thumbnailPath: '/thumbnails/macbook-air-m1.png',
     screenAspect: 16 / 10,
-    modelScale: 42.96,
+    modelScale: 0.3288,
     camPresets: MAC_CAM,
     colors: [
       { id: 'space',     label: 'Space Gray', hex: '#3a3a3c' },
@@ -442,6 +528,52 @@ const DEVICES: DeviceModel[] = [
       { id: 'yellow', label: 'Yellow', hex: '#f5e066' },
       { id: 'orange', label: 'Orange', hex: '#f5a04a' },
       { id: 'purple', label: 'Purple', hex: '#6a3d8a' },
+    ],
+  },
+  {
+    id: 'macbook-16',
+    name: 'MacBook 16"',
+    category: 'mac',
+    gltfPath: '/models/macbook-16.gltf',
+    thumbnailPath: '/thumbnails/macbook-16.png',
+    screenAspect: 16 / 10,
+    modelScale: 0.0205,
+    camPresets: MAC_CAM,
+    colors: [
+      { id: 'space',  label: 'Space Gray', hex: '#3a3a3c' },
+      { id: 'silver', label: 'Silver',     hex: '#e8e4de' },
+    ],
+  },
+  {
+    id: 'macbook-air-2018',
+    name: 'MacBook Air (2018)',
+    category: 'mac',
+    gltfPath: '/models/macbook-air-2018.gltf',
+    thumbnailPath: '/thumbnails/macbook-air-2018.png',
+    screenAspect: 16 / 10,
+    modelScale: 0.0205,
+    camPresets: MAC_CAM,
+    colors: [
+      { id: 'space',  label: 'Space Gray', hex: '#3a3a3c' },
+      { id: 'gold',   label: 'Gold',       hex: '#f5e6c8' },
+      { id: 'silver', label: 'Silver',     hex: '#e8e4de' },
+    ],
+  },
+  {
+    id: 'xdr-2019',
+    name: 'Pro Display XDR',
+    category: 'mac',
+    gltfPath: '/models/xdr-2019.gltf',
+    thumbnailPath: '/thumbnails/xdr-2019.png',
+    screenAspect: 16 / 9,
+    modelScale: 0.1397,
+    camPresets: {
+      front:     [0, 0, 26] as [number,number,number],
+      isometric: [10, 4, 22] as [number,number,number],
+      side:      [26, 2, 12] as [number,number,number],
+    },
+    colors: [
+      { id: 'silver', label: 'Silver', hex: '#e8e4de' },
     ],
   },
   {
@@ -510,6 +642,21 @@ const DEVICES: DeviceModel[] = [
       { id: 'red',    label: 'Red',        hex: '#e02020' },
     ],
   },
+  {
+    id: 'apple-watch-4',
+    name: 'Apple Watch Series 4',
+    category: 'watch',
+    gltfPath: '/models/apple-watch-4.gltf',
+    thumbnailPath: '/thumbnails/apple-watch-4.png',
+    screenAspect: 1,
+    modelScale: 0.4094,
+    camPresets: WATCH_CAM,
+    colors: [
+      { id: 'space',  label: 'Space Gray', hex: '#3a3a3c' },
+      { id: 'silver', label: 'Silver',     hex: '#e8e4de' },
+      { id: 'gold',   label: 'Gold',       hex: '#f5e6c8' },
+    ],
+  },
 
   // ── Android / Generic ─────────────────────────────────────────────────────────
   {
@@ -559,6 +706,34 @@ const DEVICES: DeviceModel[] = [
     ],
   },
   {
+    id: 'pixel-4a',
+    name: 'Google Pixel 4a',
+    category: 'android',
+    gltfPath: '/models/pixel-4a.gltf',
+    thumbnailPath: '/thumbnails/pixel-4a.png',
+    screenAspect: 19.5 / 9,
+    modelScale: 0.6954,
+    colors: [
+      { id: 'black', label: 'Just Black', hex: '#1c1c1e' },
+      { id: 'white', label: 'Barely Blue', hex: '#e8eaf0' },
+    ],
+  },
+  {
+    id: 'galaxy-s9',
+    name: 'Samsung Galaxy S9',
+    category: 'android',
+    gltfPath: '/models/galaxy-s9.gltf',
+    thumbnailPath: '/thumbnails/galaxy-s9.png',
+    screenAspect: 18.5 / 9,
+    modelScale: 0.8396,
+    colors: [
+      { id: 'midnight', label: 'Midnight Black', hex: '#1c1c1e' },
+      { id: 'coral',    label: 'Coral Blue',     hex: '#4a6b8c' },
+      { id: 'lilac',    label: 'Lilac Purple',   hex: '#8a6b9a' },
+      { id: 'titanium', label: 'Titanium Gray',   hex: '#8a8a8e' },
+    ],
+  },
+  {
     id: 'generic-phone-thin-bezel',
     name: 'Generic Phone (Thin Bezel)',
     category: 'generic',
@@ -597,6 +772,63 @@ const DEVICES: DeviceModel[] = [
       { id: 'black', label: 'Black', hex: '#1c1c1e' },
       { id: 'white', label: 'White', hex: '#f5f0e8' },
       { id: 'gray',  label: 'Gray',  hex: '#3a3a3c' },
+    ],
+  },
+  {
+    id: 'clean-phone',
+    name: 'CleanPhone',
+    category: 'generic',
+    gltfPath: '/models/clean-phone.gltf',
+    thumbnailPath: '/thumbnails/clean-phone.png',
+    screenAspect: 19.5 / 9,
+    modelScale: 0.6238,
+    colors: [
+      { id: 'black', label: 'Black', hex: '#1c1c1e' },
+      { id: 'white', label: 'White', hex: '#f5f0e8' },
+    ],
+  },
+  {
+    id: 'flow-3',
+    name: 'Flow 3',
+    category: 'generic',
+    gltfPath: '/models/flow-3.gltf',
+    thumbnailPath: '/thumbnails/flow-3.png',
+    screenAspect: 19.5 / 9,
+    modelScale: 0.3680,
+    colors: [
+      { id: 'black', label: 'Black', hex: '#1c1c1e' },
+      { id: 'white', label: 'White', hex: '#f5f0e8' },
+    ],
+  },
+  {
+    id: 'frame-tv',
+    name: 'Samsung Frame TV',
+    category: 'generic',
+    gltfPath: '/models/frame-tv.gltf',
+    thumbnailPath: '/thumbnails/frame-tv.png',
+    screenAspect: 16 / 9,
+    modelScale: 0.6429,
+    camPresets: {
+      front:     [0, 0, 26] as [number,number,number],
+      isometric: [10, 4, 22] as [number,number,number],
+      side:      [26, 2, 12] as [number,number,number],
+    },
+    colors: [
+      { id: 'black', label: 'Black', hex: '#1c1c1e' },
+      { id: 'white', label: 'White', hex: '#f5f0e8' },
+    ],
+  },
+  {
+    id: '1-device',
+    name: '1 Device',
+    category: 'generic',
+    gltfPath: '/models/1-device.gltf',
+    thumbnailPath: '/thumbnails/flow-3.png',
+    screenAspect: 19.5 / 9,
+    modelScale: 0.6963,
+    colors: [
+      { id: 'black', label: 'Black', hex: '#1c1c1e' },
+      { id: 'white', label: 'White', hex: '#f5f0e8' },
     ],
   },
 ]

@@ -10,10 +10,16 @@ export type DeviceId =
   | 'iphone-13-pro-max'
   | 'iphone-13'
   | 'iphone-13-mini'
+  | 'iphone-12-pro'
   | 'iphone-12-pro-bezel-less'
   | 'iphone-12-2020'
+  | 'iphone-11-pro'
+  | 'iphone-8'
   | 'pro-max-notchless'
+  | '9-pro'
   // iPads
+  | 'ipad-pro-11'
+  | 'ipad-m1-2021'
   | 'ipad-mini-6'
   | 'ipad-2021-magic-keyboard'
   | 'generic-tablet'
@@ -25,12 +31,16 @@ export type DeviceId =
   | 'macbook-air-m2-15'
   | 'macbook-air-m2-13'
   | 'macbook-air-m1'
+  | 'macbook-16'
+  | 'macbook-air-2018'
   | 'imac-24'
+  | 'xdr-2019'
   | 'surface-laptop-4'
   // Watches
   | 'watch-ultra-2'
   | 'watch-series-7'
   | 'watch-series-6'
+  | 'apple-watch-4'
   // iPhone 17
   | 'iphone-17-pro-max'
   // iPhone 16
@@ -42,9 +52,15 @@ export type DeviceId =
   | 'galaxy-s25-plus'
   | 'galaxy-s25'
   | 'samsung-s21'
+  | 'pixel-4a'
+  | 'galaxy-s9'
   | 'generic-phone-thin-bezel'
   | 'glass-phone'
   | 'phone-display'
+  | 'clean-phone'
+  | 'flow-3'
+  | 'frame-tv'
+  | '1-device'
 
 export interface DeviceColor {
   id: string

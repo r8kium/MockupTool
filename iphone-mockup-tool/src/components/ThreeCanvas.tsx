@@ -194,15 +194,17 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale, on
   }, [cloned, colorHex, screenshotTex, shadow])
 
   return (
-    <group scale={modelScale} position={[-center.x, -center.y, -center.z]}>
-      <primitive
-        object={cloned}
-        onClick={(e: any) => {
-          if (!onScreenClick || !SCREEN_MESHES.has(e.object?.name ?? '')) return
-          e.stopPropagation()
-          onScreenClick()
-        }}
-      />
+    <group scale={modelScale}>
+      <group position={[-center.x, -center.y, -center.z]}>
+        <primitive
+          object={cloned}
+          onClick={(e: any) => {
+            if (!onScreenClick || !SCREEN_MESHES.has(e.object?.name ?? '')) return
+            e.stopPropagation()
+            onScreenClick()
+          }}
+        />
+      </group>
     </group>
   )
 }
