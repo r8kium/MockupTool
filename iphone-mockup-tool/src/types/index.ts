@@ -123,7 +123,7 @@ export interface AnimKeyframe {
 export interface AnimTemplate {
   id: string
   name: string
-  previewPath: string
+  previewPath?: string
   keyframes: AnimKeyframe[]
 }
 
