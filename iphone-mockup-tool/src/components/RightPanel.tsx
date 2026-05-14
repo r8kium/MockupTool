@@ -49,10 +49,12 @@ function Section({ title, children, defaultOpen = true }: {
     <div className="border-b border-white/5">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full px-4 py-3 hover:bg-white/3 transition-colors"
+        className="flex items-center justify-between w-full px-4 py-3 hover:bg-white/[0.03] transition-colors group"
       >
-        <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">{title}</span>
-        {open ? <ChevronDown className="w-3.5 h-3.5 text-white/30" /> : <ChevronRight className="w-3.5 h-3.5 text-white/30" />}
+        <span className="text-[11px] font-semibold text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors">{title}</span>
+        {open
+          ? <ChevronDown className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />
+          : <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />}
       </button>
       {open && <div className="px-4 pb-4 space-y-3">{children}</div>}
     </div>
@@ -102,10 +104,10 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
   }
 
   return (
-    <aside className="w-[280px] flex-shrink-0 bg-[#252525] border-l border-white/5 overflow-y-auto flex flex-col">
+    <aside className="w-[280px] flex-shrink-0 bg-[#111111] border-l border-white/[0.06] overflow-y-auto flex flex-col">
 
       {/* Animation */}
-      <Section title="Animation" defaultOpen={false}>
+      <Section title="Animation" defaultOpen={true}>
         <AnimSection screenshot={state.screenshot} />
       </Section>
 
@@ -153,11 +155,6 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
             )
           })}
         </div>
-        {state.environmentId && (
-          <p className="text-[10px] text-white/30 mt-1">
-            IBL reflections active — flat lights replaced by environment
-          </p>
-        )}
       </Section>
 
       {/* Device */}
@@ -247,28 +244,6 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
           </div>
         </div>
 
-        {/* Camera angle */}
-        <div>
-          <p className="text-xs text-white/40 mb-2">
-            View{state.animTemplateId && <span className="ml-1.5 text-white/25">(overridden by animation)</span>}
-          </p>
-          <div className={cn('grid grid-cols-3 gap-1', state.animTemplateId && 'opacity-30 pointer-events-none')}>
-            {(['front', 'isometric', 'side'] as const).map((angle) => (
-              <button
-                key={angle}
-                onClick={() => state.setCameraAngle(angle)}
-                className={cn(
-                  'py-1.5 rounded-md text-xs font-medium border transition-colors capitalize',
-                  state.cameraAngle === angle
-                    ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                    : 'border-white/10 text-white/50 hover:border-white/30 hover:text-white/80'
-                )}
-              >
-                {angle}
-              </button>
-            ))}
-          </div>
-        </div>
       </Section>
 
       {/* Background */}

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { Search, Monitor, Layers } from 'lucide-react'
-import { DEVICE_LIST, DEVICE_CATEGORIES } from '@/lib/frames'
+import { ArrowLeft, Search } from 'lucide-react'
+import { DEVICE_LIST } from '@/lib/frames'
 import { SCENE_TEMPLATES } from '@/lib/compositions'
 import { useEditorStore } from '@/store/useEditorStore'
 import type { DeviceCategory, DeviceId, SceneTemplate } from '@/types'
@@ -9,160 +9,204 @@ import { cn } from '@/lib/utils'
 interface Props {
   onSelect: (id: DeviceId) => void
   onSelectScene: (scene: SceneTemplate) => void
+  onHome: () => void
 }
 
-type Tab = 'devices' | 'scenes'
+type Filter = DeviceCategory | 'all' | 'scenes'
 
-export function DeviceBrowser({ onSelect, onSelectScene }: Props) {
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: 'all',     label: 'All' },
+  { id: 'scenes',  label: 'Multi-Device' },
+  { id: 'iphone',  label: 'iPhone' },
+  { id: 'ipad',    label: 'iPad' },
+  { id: 'mac',     label: 'Mac' },
+  { id: 'watch',   label: 'Watch' },
+  { id: 'android', label: 'Android' },
+  { id: 'generic', label: 'Generic' },
+]
+
+export function DeviceBrowser({ onSelect, onSelectScene, onHome }: Props) {
   const { deviceId } = useEditorStore()
-  const [tab, setTab] = useState<Tab>('devices')
-  const [category, setCategory] = useState<DeviceCategory | 'all'>('all')
-  const [query, setQuery] = useState('')
+  const [filter, setFilter]   = useState<Filter>('all')
+  const [query,  setQuery]    = useState('')
 
-  const filtered = useMemo(() => {
+  const filteredDevices = useMemo(() => {
     let list = DEVICE_LIST
-    if (category !== 'all') list = list.filter((d) => d.category === category)
+    if (filter !== 'all' && filter !== 'scenes') list = list.filter((d) => d.category === filter)
     if (query.trim()) {
       const q = query.toLowerCase()
       list = list.filter((d) => d.name.toLowerCase().includes(q))
     }
     return list
-  }, [category, query])
+  }, [filter, query])
+
+  const filteredScenes = useMemo(() => {
+    if (filter !== 'all' && filter !== 'scenes') return []
+    if (query.trim()) {
+      const q = query.toLowerCase()
+      return SCENE_TEMPLATES.filter((s) => s.name.toLowerCase().includes(q))
+    }
+    return SCENE_TEMPLATES
+  }, [filter, query])
+
+  const showScenes  = filter === 'all' || filter === 'scenes'
+  const showDevices = filter !== 'scenes'
 
   return (
-    <div className="flex h-screen bg-[#1e1e1e] text-white">
-      {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside className="w-[220px] flex-shrink-0 bg-[#252525] flex flex-col border-r border-white/5">
-        <div className="p-4 pt-8">
-          <nav className="space-y-0.5">
-            <SidebarItem icon={<Monitor className="w-4 h-4" />} label="Devices" active={tab === 'devices'} onClick={() => setTab('devices')} />
-            <SidebarItem icon={<Layers className="w-4 h-4" />} label="Scenes" active={tab === 'scenes'} onClick={() => setTab('scenes')} />
-          </nav>
+    <div className="h-screen bg-[#0d0d0d] text-white flex flex-col overflow-hidden">
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <header className="flex-shrink-0 px-8 pt-7 pb-5 border-b border-white/5">
+        <div className="flex items-center justify-between mb-5">
+          <button
+            onClick={onHome}
+            className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="font-semibold tracking-tight text-base text-white">Mockup Tool</span>
+          </button>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none" />
+            <input
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setFilter('all') }}
+              placeholder="Search devices & scenes…"
+              className="w-72 bg-white/5 border border-white/8 rounded-xl pl-9 pr-4 py-2 text-sm placeholder:text-white/25 focus:outline-none focus:border-white/20 focus:bg-white/8 transition-colors"
+            />
+          </div>
         </div>
-      </aside>
 
-      {/* ── Main ─────────────────────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {tab === 'devices' ? (
-          <>
-            {/* Header */}
-            <div className="flex items-center justify-between px-8 pt-8 pb-4 flex-shrink-0">
-              <h1 className="text-3xl font-bold">Devices</h1>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search"
-                  className="w-64 bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/8"
-                />
-              </div>
-            </div>
+        {/* Filter pills */}
+        <div className="flex gap-1.5 flex-wrap">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={cn(
+                'px-3.5 py-1.5 rounded-full text-xs font-medium transition-all',
+                filter === f.id
+                  ? 'bg-white text-[#0d0d0d]'
+                  : 'bg-white/5 text-white/45 hover:bg-white/10 hover:text-white/80 border border-white/8'
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </header>
 
-            {/* Category tabs */}
-            <div className="flex gap-1 px-8 pb-4 flex-shrink-0 border-b border-white/5">
-              {DEVICE_CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setCategory(cat.id)}
-                  className={cn(
-                    'px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                    category === cat.id
-                      ? 'bg-white/10 text-white'
-                      : 'text-white/50 hover:text-white/80 hover:bg-white/5'
-                  )}
-                >
-                  {cat.label}
-                </button>
+      {/* ── Grid ───────────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
+
+        {/* Scenes */}
+        {showScenes && filteredScenes.length > 0 && (
+          <section>
+            {filter === 'all' && (
+              <h2 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-3">
+                Multi-Device Scenes
+              </h2>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {filteredScenes.map((scene) => (
+                <SceneCard key={scene.id} scene={scene} onClick={() => onSelectScene(scene)} />
               ))}
             </div>
-
-            {/* Device grid */}
-            <div className="flex-1 overflow-y-auto px-8 py-6">
-              {filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 text-white/30">
-                  <Monitor className="w-10 h-10 mb-3" />
-                  <p className="text-sm">No devices found</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {filtered.map((device) => (
-                    <button
-                      key={device.id}
-                      onClick={() => onSelect(device.id)}
-                      className={cn(
-                        'group flex flex-col rounded-xl overflow-hidden border transition-all text-left',
-                        deviceId === device.id
-                          ? 'border-blue-500/60 bg-blue-500/10'
-                          : 'border-white/8 bg-white/4 hover:border-white/20 hover:bg-white/8'
-                      )}
-                    >
-                      <div className="aspect-[4/3] bg-[#2a2a2a] flex items-center justify-center overflow-hidden">
-                        <img
-                          src={device.thumbnailPath}
-                          alt={device.name}
-                          className="w-full h-full object-contain p-3"
-                          onError={(e) => { ;(e.target as HTMLImageElement).style.display = 'none' }}
-                        />
-                      </div>
-                      <div className="px-3 py-2.5">
-                        <p className="text-xs text-white/70 leading-snug line-clamp-2">{device.name}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Scenes header */}
-            <div className="px-8 pt-8 pb-4 flex-shrink-0">
-              <h1 className="text-3xl font-bold">Multi-Screen Scenes</h1>
-              <p className="text-sm text-white/40 mt-1">Compositions with multiple devices — click each screen to upload a screenshot</p>
-            </div>
-            <div className="flex-1 overflow-y-auto px-8 py-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {SCENE_TEMPLATES.map((scene) => (
-                  <button
-                    key={scene.id}
-                    onClick={() => onSelectScene(scene)}
-                    className="group flex flex-col rounded-xl overflow-hidden border border-white/8 bg-white/4 hover:border-white/20 hover:bg-white/8 transition-all text-left"
-                  >
-                    <div className="aspect-[4/3] bg-[#2a2a2a] flex items-center justify-center overflow-hidden">
-                      <img
-                        src={scene.thumbnailPath}
-                        alt={scene.name}
-                        className="w-full h-full object-contain p-3"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="flex items-center justify-center w-full h-full"><svg class="w-8 h-8 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M2 12h20"/><path d="M12 2v20"/></svg></div>' }}
-                      />
-                    </div>
-                    <div className="px-3 py-2.5">
-                      <p className="text-xs font-medium text-white/70">{scene.name}</p>
-                      <p className="text-xs text-white/30 mt-0.5">{scene.slots.length} devices</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
+          </section>
         )}
-      </main>
+
+        {/* Devices */}
+        {showDevices && filteredDevices.length > 0 && (
+          <section>
+            {filter === 'all' && (
+              <h2 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-3">
+                Devices
+              </h2>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              {filteredDevices.map((device) => (
+                <DeviceCard
+                  key={device.id}
+                  name={device.name}
+                  thumbnailPath={device.thumbnailPath}
+                  active={deviceId === device.id}
+                  onClick={() => onSelect(device.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Empty state */}
+        {filteredDevices.length === 0 && filteredScenes.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-64 text-white/20">
+            <Search className="w-8 h-8 mb-3" />
+            <p className="text-sm">No results for "{query}"</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }) {
+function DeviceCard({ name, thumbnailPath, active, onClick }: {
+  name: string
+  thumbnailPath: string
+  active: boolean
+  onClick: () => void
+}) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left',
-        active ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+        'group flex flex-col rounded-2xl overflow-hidden border transition-all text-left',
+        active
+          ? 'border-blue-500/50 bg-blue-500/8 ring-1 ring-blue-500/30'
+          : 'border-white/6 bg-white/3 hover:border-white/15 hover:bg-white/6'
       )}
     >
-      {icon}
-      {label}
+      <div className="aspect-[4/3] flex items-center justify-center overflow-hidden bg-white/3">
+        <img
+          src={thumbnailPath}
+          alt={name}
+          className="w-full h-full object-contain p-4 transition-transform group-hover:scale-105"
+          onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0' }}
+        />
+      </div>
+      <div className="px-3 py-2.5">
+        <p className="text-xs text-white/60 leading-snug line-clamp-2 group-hover:text-white/80 transition-colors">
+          {name}
+        </p>
+      </div>
+    </button>
+  )
+}
+
+function SceneCard({ scene, onClick }: { scene: SceneTemplate; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group flex flex-col rounded-2xl overflow-hidden border border-white/6 bg-white/3 hover:border-white/15 hover:bg-white/6 transition-all text-left"
+    >
+      <div className="aspect-[4/3] flex items-center justify-center overflow-hidden bg-white/3 relative">
+        <img
+          src={scene.thumbnailPath}
+          alt={scene.name}
+          className="w-full h-full object-contain p-4 transition-transform group-hover:scale-105"
+          onError={(e) => {
+            const el = e.target as HTMLImageElement
+            el.style.opacity = '0'
+          }}
+        />
+        {/* Multi-device badge */}
+        <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-white/10 border border-white/10 text-[9px] font-semibold text-white/50 uppercase tracking-wide">
+          {scene.slots.length}×
+        </div>
+      </div>
+      <div className="px-3 py-2.5">
+        <p className="text-xs font-medium text-white/60 group-hover:text-white/80 transition-colors">{scene.name}</p>
+        <p className="text-[10px] text-white/25 mt-0.5">{scene.slots.length} devices</p>
+      </div>
     </button>
   )
 }

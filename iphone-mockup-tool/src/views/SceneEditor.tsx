@@ -70,15 +70,15 @@ export function SceneEditor({ scene, onBack }: Props) {
   }, [animTemplate, scene.name])
 
   return (
-    <div className="flex flex-col h-screen bg-[#1e1e1e] text-white overflow-hidden">
-      <header className="flex items-center justify-between px-4 py-2 bg-[#252525] border-b border-white/5 flex-shrink-0">
+    <div className="flex flex-col h-screen bg-[#0d0d0d] text-white overflow-hidden">
+      <header className="flex items-center justify-between px-4 py-2.5 bg-[#111111] border-b border-white/[0.06] flex-shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Scenes
+          <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-white/35 hover:text-white/70 transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-medium tracking-wide uppercase">Mockup Tool</span>
           </button>
-          <span className="text-white/15">|</span>
-          <span className="text-sm font-medium text-white/80">{scene.name}</span>
+          <span className="text-white/10">/</span>
+          <span className="text-sm font-medium text-white/70">{scene.name}</span>
         </div>
 
         {/* Export dropdown */}
@@ -142,19 +142,19 @@ export function SceneEditor({ scene, onBack }: Props) {
           {animTemplate && <SeekBar animTemplate={animTemplate} />}
         </div>
 
-        <aside className="w-[280px] flex-shrink-0 bg-[#252525] border-l border-white/5 overflow-y-auto">
+        <aside className="w-[280px] flex-shrink-0 bg-[#111111] border-l border-white/[0.06] overflow-y-auto">
           {/* Animation */}
-          <div className="border-b border-white/5">
-            <p className="px-4 py-3 text-xs font-semibold text-white/60 uppercase tracking-wider">Animation</p>
+          <div className="border-b border-white/[0.06]">
+            <p className="px-4 py-3 text-[11px] font-semibold text-white/40 uppercase tracking-widest">Animation</p>
             <div className="px-4 pb-4">
               <AnimSection screenshot={null} />
             </div>
           </div>
 
           {/* Screenshots */}
-          <div className="p-4 border-b border-white/5">
-            <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Screenshots</p>
-            <p className="text-xs text-white/30 mt-1">Click a screen in the viewport or upload here</p>
+          <div className="p-4 border-b border-white/[0.06]">
+            <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">Screenshots</p>
+            <p className="text-xs text-white/25 mt-1">Click a screen in the viewport or upload here</p>
           </div>
           <div className="p-4 space-y-3">
             {scene.slots.map((slot, i) => (

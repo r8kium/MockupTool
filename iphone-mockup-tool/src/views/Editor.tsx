@@ -72,17 +72,17 @@ export function Editor({ onBack }: Props) {
   }, [animTemplate, device.name])
 
   return (
-    <div className="flex flex-col h-screen bg-[#1e1e1e] text-white overflow-hidden">
+    <div className="flex flex-col h-screen bg-[#0d0d0d] text-white overflow-hidden">
 
       {/* ── Top bar ────────────────────────────────────────────────────────── */}
-      <header className="flex items-center justify-between px-4 py-2 bg-[#252525] border-b border-white/5 flex-shrink-0">
+      <header className="flex items-center justify-between px-4 py-2.5 bg-[#111111] border-b border-white/[0.06] flex-shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Devices
+          <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-white/35 hover:text-white/70 transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-medium tracking-wide uppercase">Mockup Tool</span>
           </button>
-          <span className="text-white/15">|</span>
-          <span className="text-sm font-medium text-white/80">{device.name}</span>
+          <span className="text-white/10">/</span>
+          <span className="text-sm font-medium text-white/70">{device.name}</span>
         </div>
 
         <div className="flex items-center gap-2">
