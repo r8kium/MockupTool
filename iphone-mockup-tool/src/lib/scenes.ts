@@ -94,7 +94,7 @@ const STUDIO_BG: BgPlane[] = [
 
 // ── Scene definitions ──────────────────────────────────────────────────────────
 export const SCENES: Scene[] = [
-  // 1. Classic — The Rotato geometric look
+  // 1. Classic
   {
     id: 'classic',
     name: 'Classic',

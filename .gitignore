@@ -28,5 +28,10 @@ build/
 *.log
 npm-debug.log*
 
-# Large installer binaries
+# Binaries / installers
 *.dmg
+
+# Raw asset pipeline (extraction scripts, unprocessed models)
+*.py
+__pycache__/
+gltf_models/

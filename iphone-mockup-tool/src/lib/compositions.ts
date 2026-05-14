@@ -74,7 +74,7 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
     ],
   },
 
-  // ── Rotato scene templates ────────────────────────────────────────────────────
+  // ── Additional compositions ───────────────────────────────────────────────────
   {
     id: 'iphone-12-double',
     name: 'iPhone 12 Pro Double',

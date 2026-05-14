@@ -58,7 +58,7 @@ export const useEditorStore = create<FullState & EditorActions>()(
       reset: () => set({ ...DEFAULT_STATE }),
     }),
     {
-      name: 'mockup-editor-v2',
+      name: 'mockup-editor-v3',
       partialize: (state) => {
         const { screenshot, ...rest } = state
         return rest as FullState & EditorActions

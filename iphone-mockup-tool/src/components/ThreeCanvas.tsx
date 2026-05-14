@@ -36,6 +36,7 @@ const GLASS_FRONT  = new THREE.MeshPhysicalMaterial({ color: '#ffffff', transmis
 const GLASS_ROUGH  = new THREE.MeshPhysicalMaterial({ color: '#ffffff', transmission: 0.40, roughness: 0.15, metalness: 0, thickness: 0.3, transparent: true, opacity: 0.40, depthWrite: false })
 
 // ── Mesh name sets ───────────────────────────────────────────────────────────────
+const HIDDEN_MESH_TAG    = 'rotatoTag'   // non-visual metadata node present in device GLTF files
 const SCREEN_MESHES      = new Set(['Screen', 'Screen_Top', 'Screen_Inside'])
 const FRONT_GLASS_MESHES = new Set(['Glass', 'Glass_Screen', 'Glass_screen', 'Glass_Top', 'Glass_Screen_Top', 'Glass_001'])
 const ROUGH_GLASS_MESHES = new Set(['GlassRough', 'Glass_Rough', 'Glass_Rough_001'])
@@ -101,7 +102,7 @@ function computeCenter(root: THREE.Object3D): THREE.Vector3 {
   root.traverse((obj) => {
     if (!(obj instanceof THREE.Mesh)) return
     const n = obj.name
-    if (n.toLowerCase().includes('shadow') || n === 'rotatoTag') return
+    if (n.toLowerCase().includes('shadow') || n === HIDDEN_MESH_TAG) return
     const geo = obj.geometry as THREE.BufferGeometry
     if (!geo.boundingBox) geo.computeBoundingBox()
     const b = geo.boundingBox
@@ -163,7 +164,7 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale, on
       if (!(node instanceof THREE.Mesh)) return
       const n = node.name
 
-      if (n.toLowerCase().includes('shadow') || n === 'rotatoTag') { node.visible = false; return }
+      if (n.toLowerCase().includes('shadow') || n === HIDDEN_MESH_TAG) { node.visible = false; return }
 
       if (SCREEN_MESHES.has(n)) {
         if (screenshotTex) normalizeScreenUV(node, screenshotTex)

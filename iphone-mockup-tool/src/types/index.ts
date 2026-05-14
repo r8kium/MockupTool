@@ -123,7 +123,6 @@ export interface AnimKeyframe {
 export interface AnimTemplate {
   id: string
   name: string
-  previewPath?: string  // MP4 from Rotato bundle, kept for future export/video use
   keyframes: AnimKeyframe[]
 }
 
