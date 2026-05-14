@@ -263,7 +263,12 @@ function AnimatedCamera({ template }: { template: AnimTemplate }) {
   }, [template])
 
   useFrame((_, delta) => {
-    elapsedRef.current = (elapsedRef.current + delta) % totalDuration
+    if (animClock.seekTo !== null) {
+      elapsedRef.current = animClock.seekTo
+      animClock.seekTo = null
+    }
+    if (!animClock.paused) elapsedRef.current += delta
+    elapsedRef.current = elapsedRef.current % totalDuration
     animClock.elapsed = elapsedRef.current
     const t = elapsedRef.current
     const kfs = template.keyframes
@@ -313,14 +318,24 @@ function CameraController({ angle, presets, onMount }: {
 }
 
 // ── Export helper ─────────────────────────────────────────────────────────────────
-function Exporter({ onReady }: { onReady: (fn: () => string) => void }) {
-  const { gl } = useThree()
-  useEffect(() => { onReady(() => gl.domElement.toDataURL('image/png')) }, [gl, onReady])
+interface ThreeCtx { gl: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.Camera }
+
+function Exporter({ onReady }: { onReady: (exportFn: () => string, ctx: ThreeCtx) => void }) {
+  const { gl, scene, camera } = useThree()
+  useEffect(() => {
+    onReady(
+      () => gl.domElement.toDataURL('image/png'),
+      { gl: gl as THREE.WebGLRenderer, scene: scene as THREE.Scene, camera: camera as THREE.Camera },
+    )
+  }, [gl, scene, camera, onReady])
   return null
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────────
-export interface ThreeCanvasRef { exportPNG: () => string }
+export interface ThreeCanvasRef {
+  exportPNG: () => string
+  getThreeContext: () => ThreeCtx | null
+}
 
 interface ThreeCanvasProps {
   state: EditorState & { shadowPreset?: ShadowPreset }
@@ -335,6 +350,7 @@ interface ThreeCanvasProps {
 export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
   function ThreeCanvas({ state, canvasRef, onScreenshotUpload, sceneTemplate, slotScreenshots, onSlotScreenshotUpload, animTemplate }, _ref) {
     const exportFnRef   = useRef<(() => string) | null>(null)
+    const threeCtxRef   = useRef<ThreeCtx | null>(null)
     const fileInputRef  = useRef<HTMLInputElement>(null)
     const slotRefs      = useRef<Record<number, HTMLInputElement | null>>({})
 
@@ -346,7 +362,10 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
     const camPresets  = sceneTemplate?.camPresets ?? device.camPresets ?? DEFAULT_CAM
 
     useEffect(() => {
-      if (canvasRef) canvasRef.current = { exportPNG: () => exportFnRef.current?.() ?? '' }
+      if (canvasRef) canvasRef.current = {
+        exportPNG: () => exportFnRef.current?.() ?? '',
+        getThreeContext: () => threeCtxRef.current,
+      }
     }, [canvasRef])
 
     const onFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, cb: (url: string) => void) => {
@@ -388,7 +407,7 @@ export const ThreeCanvas = forwardRef<ThreeCanvasRef, ThreeCanvasProps>(
               ? <AnimatedCamera template={animTemplate} />
               : <CameraController angle={state.cameraAngle} presets={camPresets} onMount={() => { animClock.templateId = null }} />
             }
-            <Exporter onReady={(fn) => { exportFnRef.current = fn }} />
+            <Exporter onReady={(fn, ctx) => { exportFnRef.current = fn; threeCtxRef.current = ctx }} />
             <StudioLighting shadow={!!shadowCfg} />
 
             <Suspense fallback={null}>
