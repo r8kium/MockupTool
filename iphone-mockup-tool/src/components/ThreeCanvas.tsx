@@ -227,8 +227,8 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale, on
   const center  = useMemo(() => computeCenter(cloned), [cloned])
 
   const screenshotTex = useMemo(() => {
-    if (!screenshotUrl) return null
-    const tex = new THREE.TextureLoader().load(screenshotUrl)
+    const url = screenshotUrl ?? '/placeholder-screen.png'
+    const tex = new THREE.TextureLoader().load(url)
     tex.colorSpace = THREE.SRGBColorSpace
     tex.flipY = false
     return tex
@@ -245,10 +245,10 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale, on
       if (n.toLowerCase().includes('shadow') || n === HIDDEN_MESH_TAG) { node.visible = false; return }
 
       if (SCREEN_MESHES.has(n)) {
-        if (screenshotTex) normalizeScreenUV(node, screenshotTex)
+        normalizeScreenUV(node, screenshotTex)
         node.material = new THREE.MeshBasicMaterial({
-          map: screenshotTex ?? null,
-          color: screenshotTex ? '#ffffff' : '#050505',
+          map: screenshotTex,
+          color: '#ffffff',
           polygonOffset: true,
           polygonOffsetFactor: 4,
           polygonOffsetUnits: 4,
@@ -258,14 +258,12 @@ function DeviceModel({ gltfPath, colorHex, screenshotUrl, shadow, modelScale, on
       }
 
       if (FRONT_GLASS_MESHES.has(n)) {
-        node.visible = !screenshotTex
-        if (!screenshotTex) { node.material = GLASS_FRONT; node.renderOrder = 2 }
+        node.visible = false
         return
       }
 
       if (ROUGH_GLASS_MESHES.has(n)) {
-        node.visible = !screenshotTex
-        if (!screenshotTex) { node.material = GLASS_ROUGH; node.renderOrder = 2 }
+        node.visible = false
         return
       }
 
