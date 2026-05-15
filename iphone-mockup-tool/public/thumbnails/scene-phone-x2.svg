@@ -1,0 +1,15 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#0f0f0f" width="400" height="300"/>
+  <!-- Back phone -->
+  <g transform="translate(225,150) rotate(12) translate(-45,-90)">
+    <rect x="0" y="0" width="90" height="180" rx="11" fill="#d0d0d0" opacity="0.55"/>
+    <rect x="7" y="14" width="76" height="152" rx="6" fill="#1a1a1a" opacity="0.8"/>
+    <rect x="32" y="5" width="26" height="5" rx="3" fill="#b0b0b0" opacity="0.5"/>
+  </g>
+  <!-- Front phone -->
+  <g transform="translate(175,150) rotate(-8) translate(-45,-90)">
+    <rect x="0" y="0" width="90" height="180" rx="11" fill="white"/>
+    <rect x="7" y="14" width="76" height="152" rx="6" fill="#111"/>
+    <rect x="32" y="5" width="26" height="5" rx="3" fill="#ccc"/>
+  </g>
+</svg>

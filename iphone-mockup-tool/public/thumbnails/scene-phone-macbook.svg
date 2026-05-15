@@ -1,0 +1,16 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#0f0f0f" width="400" height="300"/>
+  <!-- MacBook base -->
+  <rect x="60" y="195" width="280" height="18" rx="3" fill="#c0c0c0" opacity="0.5"/>
+  <!-- MacBook lid/screen -->
+  <rect x="75" y="95" width="250" height="100" rx="8" fill="#b8b8b8" opacity="0.7"/>
+  <rect x="83" y="102" width="234" height="86" rx="5" fill="#111"/>
+  <!-- MacBook keyboard detail -->
+  <rect x="65" y="195" width="270" height="14" rx="2" fill="#a0a0a0" opacity="0.3"/>
+  <!-- Phone on keyboard (upright) -->
+  <g transform="translate(310,160) rotate(-3) translate(-30,-58)">
+    <rect x="0" y="0" width="60" height="116" rx="8" fill="white" opacity="0.95"/>
+    <rect x="5" y="10" width="50" height="96" rx="4" fill="#111"/>
+    <rect x="21" y="3" width="18" height="4" rx="2" fill="#ccc"/>
+  </g>
+</svg>

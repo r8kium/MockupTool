@@ -1,0 +1,15 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#0f0f0f" width="400" height="300"/>
+  <!-- MacBook base -->
+  <rect x="25" y="192" width="195" height="15" rx="3" fill="#bbb" opacity="0.45"/>
+  <!-- MacBook lid -->
+  <rect x="32" y="100" width="181" height="92" rx="7" fill="#b5b5b5" opacity="0.65"/>
+  <rect x="39" y="107" width="167" height="78" rx="5" fill="#111"/>
+  <!-- iPad (portrait, beside mac, slightly angled) -->
+  <g transform="translate(310,148) rotate(-4) translate(-52,-80)">
+    <rect x="0" y="0" width="104" height="160" rx="10" fill="white" opacity="0.88"/>
+    <rect x="7" y="10" width="90" height="140" rx="5" fill="#111"/>
+    <!-- iPad home indicator / bezel detail -->
+    <circle cx="52" cy="154" r="5" fill="#ddd" opacity="0.4"/>
+  </g>
+</svg>

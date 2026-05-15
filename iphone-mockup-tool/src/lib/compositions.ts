@@ -5,7 +5,7 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
   {
     id: 'phone-x2',
     name: 'Two Phones',
-    thumbnailPath: '/thumbnails/scene-phone-x2.png',
+    thumbnailPath: '/thumbnails/scene-phone-x2.svg',
     camPresets: {
       front:     [0,  0, 18] as [number,number,number],
       isometric: [6,  3, 15] as [number,number,number],
@@ -19,7 +19,7 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
   {
     id: 'phone-on-macbook',
     name: 'Phone on MacBook',
-    thumbnailPath: '/thumbnails/scene-phone-macbook.png',
+    thumbnailPath: '/thumbnails/scene-phone-macbook.svg',
     camPresets: {
       front:     [0,  2, 22] as [number,number,number],
       isometric: [8,  5, 18] as [number,number,number],
@@ -33,7 +33,7 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
   {
     id: 'phone-beside-macbook',
     name: 'Phone + MacBook',
-    thumbnailPath: '/thumbnails/scene-phone-beside-macbook.png',
+    thumbnailPath: '/thumbnails/scene-phone-beside-macbook.svg',
     camPresets: {
       front:     [0,  2, 22] as [number,number,number],
       isometric: [8,  5, 18] as [number,number,number],
@@ -47,7 +47,7 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
   {
     id: 'phone-macbook-watch',
     name: 'Phone + Mac + Watch',
-    thumbnailPath: '/thumbnails/scene-family.png',
+    thumbnailPath: '/thumbnails/scene-family.svg',
     camPresets: {
       front:     [0,  2, 24] as [number,number,number],
       isometric: [10, 5, 20] as [number,number,number],
@@ -62,7 +62,7 @@ export const SCENE_TEMPLATES: SceneTemplate[] = [
   {
     id: 'macbook-ipad',
     name: 'MacBook + iPad',
-    thumbnailPath: '/thumbnails/scene-macbook-ipad.png',
+    thumbnailPath: '/thumbnails/scene-macbook-ipad.svg',
     camPresets: {
       front:     [0,  2, 22] as [number,number,number],
       isometric: [8,  5, 18] as [number,number,number],
