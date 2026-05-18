@@ -4,6 +4,7 @@ import { useEditorStore } from '@/store/useEditorStore'
 import type { TextLayer, TextAnimPreset } from '@/types'
 import { TEXT_EFFECTS } from '@/lib/textEffects'
 import { ANIM_PRESET_LABELS } from '@/lib/textAnimations'
+import { animClock } from '@/lib/animClock'
 import { cn } from '@/lib/utils'
 
 // ── Colour palette ────────────────────────────────────────────────────────────
@@ -137,14 +138,18 @@ export function TextLayerPanel() {
               Math.abs(layer.enterDuration - fx.enter.duration) < 0.01
             return (
               <button key={fx.id}
-                onClick={() => upd({
-                  enterAnim:     fx.enter.anim,
-                  enterDuration: fx.enter.duration,
-                  enterEasing:   fx.enter.easing,
-                  exitAnim:      fx.exit.anim,
-                  exitDuration:  fx.exit.duration,
-                  exitEasing:    fx.exit.easing,
-                })}
+                onClick={() => {
+                  upd({
+                    enterAnim:     fx.enter.anim,
+                    enterDuration: fx.enter.duration,
+                    enterEasing:   fx.enter.easing,
+                    exitAnim:      fx.exit.anim,
+                    exitDuration:  fx.exit.duration,
+                    exitEasing:    fx.exit.easing,
+                  })
+                  // Immediately replay so user sees the animation
+                  animClock.resetTextPreview = true
+                }}
                 className={cn(
                   'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all',
                   active

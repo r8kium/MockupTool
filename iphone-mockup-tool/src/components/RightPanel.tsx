@@ -43,22 +43,25 @@ const PRESET_GRADIENTS = [
   { from: '#f43f5e', to: '#fb923c' },
 ]
 
-function Section({ title, children, defaultOpen = true }: {
-  title: string; children: React.ReactNode; defaultOpen?: boolean
+function Section({ title, children, defaultOpen = true, badge }: {
+  title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: string
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="border-b border-white/5">
+    <div className="border-b border-white/[0.05]">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full px-4 py-3 hover:bg-white/[0.03] transition-colors group"
+        className="flex items-center justify-between w-full px-5 py-3.5 hover:bg-white/[0.02] transition-colors group"
       >
-        <span className="text-[11px] font-semibold text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors">{title}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold text-white/35 uppercase tracking-[0.12em] group-hover:text-white/55 transition-colors">{title}</span>
+          {badge && <span className="text-[9px] bg-indigo-500/15 text-indigo-400/70 px-1.5 py-0.5 rounded-md font-medium">{badge}</span>}
+        </div>
         {open
-          ? <ChevronDown className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />
-          : <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />}
+          ? <ChevronDown className="w-3 h-3 text-white/15 group-hover:text-white/35 transition-colors" />
+          : <ChevronRight className="w-3 h-3 text-white/15 group-hover:text-white/35 transition-colors" />}
       </button>
-      {open && <div className="px-4 pb-4 space-y-3">{children}</div>}
+      {open && <div className="px-5 pb-5 space-y-3">{children}</div>}
     </div>
   )
 }
@@ -110,31 +113,38 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
     <aside className="w-[280px] flex-shrink-0 bg-[#111111] border-l border-white/[0.06] overflow-y-auto flex flex-col">
 
       {/* ── Always-visible layers strip ──────────────────────────────────── */}
-      {state.textLayers.length > 0 && (
-        <div className="flex-shrink-0 border-b border-white/[0.06] px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Layers</span>
-            <button onClick={() => state.addTextLayer()}
-              className="text-[10px] text-indigo-400/70 hover:text-indigo-300 transition-colors font-medium">
-              + Add text
-            </button>
-          </div>
-          <LayerPanel />
+      <div className="flex-shrink-0 border-b border-white/[0.05] px-5 py-3.5">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-[10px] font-semibold text-white/35 uppercase tracking-[0.12em]">Layers</span>
+          <button onClick={() => state.addTextLayer()}
+            className="flex items-center gap-1 text-[10px] text-indigo-400/60 hover:text-indigo-300 transition-colors font-medium">
+            <span className="text-sm leading-none">+</span> Text
+          </button>
         </div>
-      )}
+        {state.textLayers.length === 0 ? (
+          <button onClick={() => state.addTextLayer()}
+            className="w-full py-2.5 rounded-xl border border-dashed border-white/10 hover:border-indigo-500/30 hover:bg-indigo-500/5 text-white/20 hover:text-indigo-400/70 text-xs transition-all">
+            + Add a text layer
+          </button>
+        ) : (
+          <LayerPanel />
+        )}
+      </div>
 
       {/* ── Context-sensitive properties ─────────────────────────────────── */}
       {showTextProps ? (
         /* Text layer selected — show text properties */
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Text</span>
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
+            <span className="text-[10px] font-semibold text-white/35 uppercase tracking-[0.12em]">Text Properties</span>
             <button onClick={() => state.selectLayer(null)}
-              className="text-[10px] text-white/25 hover:text-white/50 transition-colors">
-              ← Back to scene
+              className="text-[9px] text-white/20 hover:text-white/45 transition-colors flex items-center gap-1">
+              ← Scene
             </button>
           </div>
-          <TextLayerPanel />
+          <div className="px-5 py-4">
+            <TextLayerPanel />
+          </div>
         </div>
       ) : (
         /* Nothing selected — show scene controls */

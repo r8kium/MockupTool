@@ -125,13 +125,24 @@ export function TextOverlay({ frameWidth, frameHeight }: Props) {
       const delta = Math.min((now - raf.lastTime) / 1000, 0.1)
       raf.lastTime = now
 
+      // Preview reset (triggered by effect button clicks)
+      if (animClock.resetTextPreview) {
+        raf.localElapsed = 0
+        animClock.elapsedForText = 0
+        animClock.paused = false
+        animClock.resetTextPreview = false
+      }
+
       if (!animClock.paused) {
         raf.localElapsed += delta
         animClock.elapsedForText = raf.localElapsed
       }
+
+      // Seek — if no camera animation is active nobody else clears seekTo
       if (animClock.seekTo !== null) {
         raf.localElapsed = animClock.seekTo
         animClock.elapsedForText = animClock.seekTo
+        if (!animTemplateId) animClock.seekTo = null
       }
 
       const t = animTemplateId ? animClock.elapsed : raf.localElapsed

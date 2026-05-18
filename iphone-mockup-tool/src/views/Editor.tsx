@@ -1,12 +1,12 @@
 import { useRef, useCallback, useState, useEffect } from 'react'
 import {
   ArrowLeft, ChevronDown, Download, Film, RotateCcw,
-  Upload, Plus, LayoutTemplate, ChevronRight,
+  Upload, Plus, LayoutTemplate,
 } from 'lucide-react'
 import { ThreeCanvas } from '@/components/ThreeCanvas'
 import type { ThreeCanvasRef } from '@/components/ThreeCanvas'
 import { RightPanel } from '@/components/RightPanel'
-import { SeekBar } from '@/components/SeekBar'
+import { UniversalTimeline } from '@/components/UniversalTimeline'
 import { CanvasFrame } from '@/components/CanvasFrame'
 import { TextOverlay } from '@/components/TextOverlay'
 import { useEditorStore } from '@/store/useEditorStore'
@@ -15,6 +15,7 @@ import { ANIM_TEMPLATE_MAP } from '@/lib/animTemplates'
 import { readFileAsDataUrl } from '@/lib/utils'
 import { exportAnimationMp4 } from '@/lib/exportMp4'
 import { CANVAS_PRESETS, CANVAS_PRESET_MAP } from '@/lib/canvasPresets'
+import { animClock } from '@/lib/animClock'
 import { cn } from '@/lib/utils'
 
 interface Props { onBack: () => void }
@@ -45,6 +46,36 @@ export function Editor({ onBack }: Props) {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName
+      // Skip when typing in inputs/textareas/contentEditable
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if ((e.target as HTMLElement).isContentEditable) return
+
+      if (e.code === 'Space') {
+        e.preventDefault()
+        animClock.paused = !animClock.paused
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault()
+        animClock.seekTo = 0
+        animClock.resetTextPreview = true
+        animClock.paused = false
+      }
+      if (e.key === 'Escape') {
+        state.selectLayer(null)
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && state.selectedLayerId) {
+        e.preventDefault()
+        state.deleteTextLayer(state.selectedLayerId)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [state])
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -84,6 +115,9 @@ export function Editor({ onBack }: Props) {
 
   const handleAddText = useCallback(() => {
     state.addTextLayer()
+    // Restart preview so the new layer's entrance animation plays immediately
+    animClock.resetTextPreview = true
+    animClock.paused = false
   }, [state])
 
   const handleFrameResize = useCallback((w: number, h: number) => {
@@ -260,7 +294,7 @@ export function Editor({ onBack }: Props) {
               <TextOverlay frameWidth={frameSize.w} frameHeight={frameSize.h} />
             </div>
           )}
-          {animTemplate && <SeekBar animTemplate={animTemplate} />}
+          <UniversalTimeline animTemplate={animTemplate} />
         </div>
 
         {/* Right panel */}
