@@ -139,6 +139,45 @@ export interface BackgroundConfig {
   animBgId?: string
 }
 
+// ── Text layers ───────────────────────────────────────────────────────────────
+
+export type TextAnimPreset =
+  | 'none' | 'fade-in' | 'slide-up' | 'slide-down'
+  | 'slide-left' | 'slide-right' | 'scale-up' | 'blur-in' | 'typewriter'
+
+export interface TextLayer {
+  id: string
+  text: string
+  // Position as % of canvas (0–100)
+  x: number
+  y: number
+  width: number         // max text block width in %
+  // Typography
+  fontFamily: string
+  fontSize: number      // px at export resolution
+  fontWeight: 100|200|300|400|500|600|700|800|900
+  fontStyle: 'normal' | 'italic'
+  color: string
+  opacity: number       // 0–1
+  align: 'left' | 'center' | 'right'
+  letterSpacing: number // em
+  lineHeight: number    // multiplier e.g. 1.2
+  // Timeline
+  startTime: number     // seconds
+  duration: number      // seconds; -1 = entire animation
+  // Enter animation
+  enterAnim: TextAnimPreset
+  enterDuration: number
+  enterEasing: [number, number, number, number]
+  // Exit animation
+  exitAnim: TextAnimPreset
+  exitDuration: number
+  exitEasing: [number, number, number, number]
+  // Layer state
+  visible: boolean
+  locked: boolean
+}
+
 export interface EditorState {
   screenshot: string | null
   deviceId: DeviceId

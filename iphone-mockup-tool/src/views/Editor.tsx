@@ -1,39 +1,50 @@
 import { useRef, useCallback, useState, useEffect } from 'react'
-import { ArrowLeft, ChevronDown, Download, Film, RotateCcw, Upload } from 'lucide-react'
+import {
+  ArrowLeft, ChevronDown, Download, Film, RotateCcw,
+  Upload, Plus, LayoutTemplate, ChevronRight,
+} from 'lucide-react'
 import { ThreeCanvas } from '@/components/ThreeCanvas'
 import type { ThreeCanvasRef } from '@/components/ThreeCanvas'
 import { RightPanel } from '@/components/RightPanel'
 import { SeekBar } from '@/components/SeekBar'
+import { CanvasFrame } from '@/components/CanvasFrame'
+import { TextOverlay } from '@/components/TextOverlay'
 import { useEditorStore } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
 import { ANIM_TEMPLATE_MAP } from '@/lib/animTemplates'
 import { readFileAsDataUrl } from '@/lib/utils'
 import { exportAnimationMp4 } from '@/lib/exportMp4'
+import { CANVAS_PRESETS, CANVAS_PRESET_MAP } from '@/lib/canvasPresets'
+import { cn } from '@/lib/utils'
 
-interface Props {
-  onBack: () => void
-}
+interface Props { onBack: () => void }
+
+const PRESET_GROUPS = ['Vertical', 'Square', 'Landscape', 'App Store'] as const
 
 export function Editor({ onBack }: Props) {
-  const canvasRef  = useRef<ThreeCanvasRef | null>(null)
-  const uploadRef  = useRef<HTMLInputElement>(null)
-  const menuRef    = useRef<HTMLDivElement>(null)
-  const state      = useEditorStore()
-  const device     = DEVICE_MODELS[state.deviceId]
-  const animTemplate = state.animTemplateId ? ANIM_TEMPLATE_MAP[state.animTemplateId] ?? null : null
+  const canvasRef     = useRef<ThreeCanvasRef | null>(null)
+  const uploadRef     = useRef<HTMLInputElement>(null)
+  const menuRef       = useRef<HTMLDivElement>(null)
+  const presetMenuRef = useRef<HTMLDivElement>(null)
+  const state         = useEditorStore()
+  const device        = DEVICE_MODELS[state.deviceId]
+  const animTemplate  = state.animTemplateId ? ANIM_TEMPLATE_MAP[state.animTemplateId] ?? null : null
+  const activePreset  = state.canvasPresetId ? CANVAS_PRESET_MAP[state.canvasPresetId] ?? null : null
 
-  const [menuOpen,       setMenuOpen]       = useState(false)
-  const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null)
+  const [menuOpen,        setMenuOpen]        = useState(false)
+  const [presetMenuOpen,  setPresetMenuOpen]  = useState(false)
+  const [exportProgress,  setExportProgress]  = useState<{ current: number; total: number } | null>(null)
+  const [frameSize,       setFrameSize]       = useState({ w: 0, h: 0 })
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
-    if (!menuOpen) return
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+      if (presetMenuRef.current && !presetMenuRef.current.contains(e.target as Node)) setPresetMenuOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [menuOpen])
+  }, [])
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -58,34 +69,102 @@ export function Editor({ onBack }: Props) {
     try {
       const blob = await exportAnimationMp4(
         ctx.gl, ctx.scene, ctx.camera, animTemplate,
+        state.textLayers,
         (current, total) => setExportProgress({ current, total }),
       )
       const url = URL.createObjectURL(blob)
       Object.assign(document.createElement('a'), {
-        href: url,
-        download: `${device.name.toLowerCase().replace(/\s+/g, '-')}-animation.mp4`,
+        href: url, download: `${device.name.toLowerCase().replace(/\s+/g, '-')}-animation.mp4`,
       }).click()
       URL.revokeObjectURL(url)
     } finally {
       setExportProgress(null)
     }
-  }, [animTemplate, device.name])
+  }, [animTemplate, device.name, state.textLayers])
+
+  const handleAddText = useCallback(() => {
+    state.addTextLayer()
+  }, [state])
+
+  const handleFrameResize = useCallback((w: number, h: number) => {
+    setFrameSize({ w, h })
+  }, [])
 
   return (
     <div className="flex flex-col h-screen bg-[#0d0d0d] text-white overflow-hidden">
 
-      {/* ── Top bar ────────────────────────────────────────────────────────── */}
-      <header className="flex items-center justify-between px-4 py-2.5 bg-[#111111] border-b border-white/[0.06] flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-white/35 hover:text-white/70 transition-colors">
+      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      <header className="flex items-center justify-between px-4 py-2.5 bg-[#111111] border-b border-white/[0.06] flex-shrink-0 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-white/35 hover:text-white/70 transition-colors flex-shrink-0">
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="text-[11px] font-medium tracking-wide uppercase">Mockup Tool</span>
           </button>
           <span className="text-white/10">/</span>
-          <span className="text-sm font-medium text-white/70">{device.name}</span>
+          <span className="text-sm font-medium text-white/70 truncate">{device.name}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Canvas format picker */}
+          <div className="relative" ref={presetMenuRef}>
+            <button
+              onClick={() => setPresetMenuOpen(v => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+            >
+              <LayoutTemplate className="w-3.5 h-3.5" />
+              {activePreset ? activePreset.name : 'Free Canvas'}
+              <ChevronDown className="w-3 h-3 text-white/30" />
+            </button>
+            {presetMenuOpen && (
+              <div className="absolute left-0 top-full mt-1 bg-[#1e1e1e] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden w-72 max-h-[480px] overflow-y-auto">
+                {/* Free canvas option */}
+                <button
+                  onClick={() => { state.setCanvasPreset(null); setPresetMenuOpen(false) }}
+                  className={cn(
+                    'flex items-center justify-between w-full px-4 py-2.5 text-xs hover:bg-white/5 transition-colors border-b border-white/5',
+                    !activePreset ? 'text-white' : 'text-white/50'
+                  )}
+                >
+                  <span>Free Canvas</span>
+                  {!activePreset && <span className="text-white/30 text-[10px]">✓</span>}
+                </button>
+                {PRESET_GROUPS.map(group => {
+                  const presets = CANVAS_PRESETS.filter(p => p.group === group)
+                  return (
+                    <div key={group}>
+                      <div className="px-4 pt-2.5 pb-1">
+                        <span className="text-[9px] font-semibold text-white/25 uppercase tracking-widest">{group}</span>
+                      </div>
+                      {presets.map(preset => (
+                        <button
+                          key={preset.id}
+                          onClick={() => { state.setCanvasPreset(preset.id); setPresetMenuOpen(false) }}
+                          className={cn(
+                            'flex items-center justify-between w-full px-4 py-2 text-xs hover:bg-white/5 transition-colors',
+                            state.canvasPresetId === preset.id ? 'text-white' : 'text-white/60'
+                          )}
+                        >
+                          <div>
+                            <span className="font-medium">{preset.name}</span>
+                            <span className="text-white/25 ml-2">{preset.platform}</span>
+                          </div>
+                          <span className="text-white/25 text-[10px] font-mono">{preset.width}×{preset.height}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Add text */}
+          <button onClick={handleAddText}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-indigo-200 transition-colors">
+            <Plus className="w-3.5 h-3.5" />
+            Add Text
+          </button>
+
           <input ref={uploadRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
           <button onClick={() => uploadRef.current?.click()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white hover:bg-white/8 border border-white/10 transition-colors">
@@ -98,7 +177,7 @@ export function Editor({ onBack }: Props) {
             Reset
           </button>
 
-          {/* Export dropdown */}
+          {/* Export */}
           {exportProgress ? (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#2a2a2a] border border-white/10 text-white/50">
               Exporting {exportProgress.current} / {exportProgress.total}…
@@ -111,7 +190,7 @@ export function Editor({ onBack }: Props) {
                   <Download className="w-3.5 h-3.5" />
                   Export
                 </button>
-                <button onClick={() => setMenuOpen((v) => !v)}
+                <button onClick={() => setMenuOpen(v => !v)}
                   className="px-1.5 py-1.5 rounded-r-lg bg-blue-700 hover:bg-blue-600 text-white border-l border-blue-500/40 transition-colors">
                   <ChevronDown className="w-3.5 h-3.5" />
                 </button>
@@ -121,13 +200,13 @@ export function Editor({ onBack }: Props) {
                   <button onClick={handleExportPng}
                     className="flex items-center gap-2 w-full px-3 py-2 text-xs text-white/80 hover:bg-white/8 transition-colors">
                     <Download className="w-3.5 h-3.5" />
-                    Export Frame
+                    Export Frame (PNG)
                   </button>
                   {animTemplate && (
                     <button onClick={handleExportMp4}
                       className="flex items-center gap-2 w-full px-3 py-2 text-xs text-white/80 hover:bg-white/8 transition-colors">
                       <Film className="w-3.5 h-3.5" />
-                      Export Animation
+                      Export Animation (MP4)
                     </button>
                   )}
                 </div>
@@ -140,23 +219,45 @@ export function Editor({ onBack }: Props) {
       {/* ── Body ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0">
 
-        {/* 3D Viewport + SeekBar */}
+        {/* Viewport */}
         <div className="flex-1 flex flex-col min-h-0">
-          <div className="relative flex-1 min-h-0">
-            {!state.screenshot && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-                <p className="text-xs text-white/30 bg-black/30 rounded-full px-4 py-1.5 backdrop-blur-sm">
-                  Click the device screen to upload a screenshot
-                </p>
-              </div>
-            )}
-            <ThreeCanvas
-              state={state}
-              canvasRef={canvasRef}
-              onScreenshotUpload={state.setScreenshot}
-              animTemplate={animTemplate}
-            />
-          </div>
+          {activePreset ? (
+            // Fixed-AR canvas mode
+            <CanvasFrame preset={activePreset} onResize={handleFrameResize}>
+              <ThreeCanvas
+                state={state}
+                canvasRef={canvasRef}
+                onScreenshotUpload={state.setScreenshot}
+                animTemplate={animTemplate}
+              />
+              <TextOverlay frameWidth={frameSize.w} frameHeight={frameSize.h} />
+            </CanvasFrame>
+          ) : (
+            // Free canvas mode
+            <div className="relative flex-1 min-h-0" ref={(el) => {
+              if (el) {
+                const { width, height } = el.getBoundingClientRect()
+                if (frameSize.w !== width || frameSize.h !== height) {
+                  setFrameSize({ w: width, h: height })
+                }
+              }
+            }}>
+              {!state.screenshot && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                  <p className="text-xs text-white/30 bg-black/30 rounded-full px-4 py-1.5 backdrop-blur-sm">
+                    Click the device screen to upload a screenshot
+                  </p>
+                </div>
+              )}
+              <ThreeCanvas
+                state={state}
+                canvasRef={canvasRef}
+                onScreenshotUpload={state.setScreenshot}
+                animTemplate={animTemplate}
+              />
+              <TextOverlay frameWidth={frameSize.w} frameHeight={frameSize.h} />
+            </div>
+          )}
           {animTemplate && <SeekBar animTemplate={animTemplate} />}
         </div>
 

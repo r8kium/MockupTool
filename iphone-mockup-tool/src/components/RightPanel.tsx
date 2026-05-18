@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { LayerPanel } from '@/components/LayerPanel'
+import { TextLayerPanel } from '@/components/TextLayerPanel'
 import { useDropzone } from 'react-dropzone'
 import { useEditorStore, type ShadowPreset } from '@/store/useEditorStore'
 import { DEVICE_MODELS } from '@/lib/frames'
@@ -85,6 +87,7 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
   const state = useEditorStore()
   const device = DEVICE_MODELS[state.deviceId]
   const [customHexInput, setCustomHexInput] = useState(state.customColorHex ?? '#ffffff')
+  const [panelTab, setPanelTab] = useState<'scene' | 'layers'>('scene')
 
   const handleCustomHexCommit = (value: string) => {
     if (/^#[0-9a-fA-F]{6}$/.test(value)) state.setCustomColor(value)
@@ -103,8 +106,49 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
     state.setBackground(next)
   }
 
+  // Auto-switch to layers tab when a text layer is selected
+  const hasTextLayers = state.textLayers.length > 0
+  const effectiveTab = (hasTextLayers && state.selectedLayerId) ? 'layers' : panelTab
+
   return (
     <aside className="w-[280px] flex-shrink-0 bg-[#111111] border-l border-white/[0.06] overflow-y-auto flex flex-col">
+
+      {/* ── Tab selector ─────────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 flex border-b border-white/[0.06]">
+        {(['scene', 'layers'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setPanelTab(tab)}
+            className={cn(
+              'flex-1 py-2.5 text-[11px] font-semibold tracking-wide uppercase transition-colors',
+              effectiveTab === tab
+                ? 'text-white border-b-2 border-indigo-500 -mb-px'
+                : 'text-white/30 hover:text-white/60'
+            )}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Layers tab ───────────────────────────────────────────────────── */}
+      {effectiveTab === 'layers' && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-4 py-4 border-b border-white/5">
+            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block mb-3">Layers</span>
+            <LayerPanel />
+          </div>
+          {state.selectedLayerId && (
+            <div className="px-4 py-4">
+              <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block mb-3">Text Properties</span>
+              <TextLayerPanel />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Scene tab ─────────────────────────────────────────────────────── */}
+      {effectiveTab === 'scene' && <>
 
       {/* Animation */}
       <Section title="Animation" defaultOpen={true}>
@@ -526,6 +570,8 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
           ))}
         </div>
       </Section>
+
+      </> /* end scene tab */}
     </aside>
   )
 }
