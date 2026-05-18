@@ -87,13 +87,11 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
   const state = useEditorStore()
   const device = DEVICE_MODELS[state.deviceId]
   const [customHexInput, setCustomHexInput] = useState(state.customColorHex ?? '#ffffff')
-  const [panelTab, setPanelTab] = useState<'scene' | 'layers'>('scene')
+  const [presetTab, setPresetTab] = useState<'css' | 'photos' | 'animated'>('css')
 
   const handleCustomHexCommit = (value: string) => {
     if (/^#[0-9a-fA-F]{6}$/.test(value)) state.setCustomColor(value)
   }
-
-  const [presetTab, setPresetTab] = useState<'css' | 'photos' | 'animated'>('css')
 
   const setType = (type: BackgroundType) => {
     const next: BackgroundConfig = { ...state.background, type }
@@ -106,49 +104,41 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
     state.setBackground(next)
   }
 
-  // Auto-switch to layers tab when a text layer is selected
-  const hasTextLayers = state.textLayers.length > 0
-  const effectiveTab = (hasTextLayers && state.selectedLayerId) ? 'layers' : panelTab
+  const showTextProps = !!state.selectedLayerId
 
   return (
     <aside className="w-[280px] flex-shrink-0 bg-[#111111] border-l border-white/[0.06] overflow-y-auto flex flex-col">
 
-      {/* ── Tab selector ─────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 flex border-b border-white/[0.06]">
-        {(['scene', 'layers'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setPanelTab(tab)}
-            className={cn(
-              'flex-1 py-2.5 text-[11px] font-semibold tracking-wide uppercase transition-colors',
-              effectiveTab === tab
-                ? 'text-white border-b-2 border-indigo-500 -mb-px'
-                : 'text-white/30 hover:text-white/60'
-            )}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Layers tab ───────────────────────────────────────────────────── */}
-      {effectiveTab === 'layers' && (
-        <div className="flex-1 overflow-y-auto">
-          <div className="px-4 py-4 border-b border-white/5">
-            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block mb-3">Layers</span>
-            <LayerPanel />
+      {/* ── Always-visible layers strip ──────────────────────────────────── */}
+      {state.textLayers.length > 0 && (
+        <div className="flex-shrink-0 border-b border-white/[0.06] px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Layers</span>
+            <button onClick={() => state.addTextLayer()}
+              className="text-[10px] text-indigo-400/70 hover:text-indigo-300 transition-colors font-medium">
+              + Add text
+            </button>
           </div>
-          {state.selectedLayerId && (
-            <div className="px-4 py-4">
-              <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest block mb-3">Text Properties</span>
-              <TextLayerPanel />
-            </div>
-          )}
+          <LayerPanel />
         </div>
       )}
 
-      {/* ── Scene tab ─────────────────────────────────────────────────────── */}
-      {effectiveTab === 'scene' && <>
+      {/* ── Context-sensitive properties ─────────────────────────────────── */}
+      {showTextProps ? (
+        /* Text layer selected — show text properties */
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Text</span>
+            <button onClick={() => state.selectLayer(null)}
+              className="text-[10px] text-white/25 hover:text-white/50 transition-colors">
+              ← Back to scene
+            </button>
+          </div>
+          <TextLayerPanel />
+        </div>
+      ) : (
+        /* Nothing selected — show scene controls */
+        <>
 
       {/* Animation */}
       <Section title="Animation" defaultOpen={true}>
@@ -571,7 +561,8 @@ export function RightPanel({ onOpenBrowser }: { onOpenBrowser: () => void }) {
         </div>
       </Section>
 
-      </> /* end scene tab */}
+      </> /* end scene controls */
+      )}
     </aside>
   )
 }

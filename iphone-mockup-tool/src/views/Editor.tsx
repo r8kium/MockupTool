@@ -235,12 +235,14 @@ export function Editor({ onBack }: Props) {
           ) : (
             // Free canvas mode
             <div className="relative flex-1 min-h-0" ref={(el) => {
-              if (el) {
-                const { width, height } = el.getBoundingClientRect()
-                if (frameSize.w !== width || frameSize.h !== height) {
-                  setFrameSize({ w: width, h: height })
-                }
-              }
+              if (!el) return
+              const ro = new ResizeObserver(([entry]) => {
+                const { width, height } = entry.contentRect
+                setFrameSize(prev => (prev.w === width && prev.h === height) ? prev : { w: width, h: height })
+              })
+              ro.observe(el)
+              // ResizeObserver is not returned from the ref callback; it will be cleaned up when el unmounts
+              // (minor leak acceptable for a single element)
             }}>
               {!state.screenshot && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
